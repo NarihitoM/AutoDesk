@@ -1,5 +1,5 @@
 import { dialog, ipcMain, screen } from 'electron'
-import { rectFromPoints, type Point } from '@/shared/lib/geometry'
+import { isLargeEnough, rectFromPoints, type Point } from '@/shared/lib/geometry'
 import { Channels } from '@/shared/lib/channels'
 import type { SelectionRect } from '@/shared/types/ipc'
 import { startSession } from '../Agent/assistant'
@@ -20,9 +20,6 @@ import {
   showPanelNear
 } from '../tools/windows'
 
-const MIN_SELECTION = 4
-const MIN_MOUSE_SELECTION = 8
-
 let dragOrigin: Point | null = null
 
 function finite(value: unknown): number | null {
@@ -35,8 +32,8 @@ function parseRect(raw: unknown): SelectionRect | null {
   const width = finite(pick(raw, 'width'))
   const height = finite(pick(raw, 'height'))
   if (x === null || y === null || width === null || height === null) return null
-  if (width < MIN_SELECTION || height < MIN_SELECTION) return null
-  return { x, y, width, height }
+  const rect = { x, y, width, height }
+  return isLargeEnough(rect) ? rect : null
 }
 
 function cancelCapture(trigger: CaptureTrigger): void {
@@ -101,8 +98,7 @@ export function handleRightDrag(trigger: CaptureTrigger, event: RightDragEvent):
   if (event.type === 'end') {
     const rect = selectionTo(event.point)
     dragOrigin = null
-    const large = rect !== null && rect.width >= MIN_MOUSE_SELECTION && rect.height >= MIN_MOUSE_SELECTION
-    void completeCapture(trigger, large ? rect : null)
+    void completeCapture(trigger, rect && isLargeEnough(rect) ? rect : null)
   }
 }
 

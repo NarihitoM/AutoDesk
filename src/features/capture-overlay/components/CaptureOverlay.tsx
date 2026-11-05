@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { bridge } from '@/shared/lib/bridge'
+import { isLargeEnough } from '@/shared/lib/geometry'
 import { useSelection } from '../hooks/useSelection'
 import styles from './CaptureOverlay.module.css'
 
@@ -27,7 +28,7 @@ export function CaptureOverlay() {
           className={styles.selection}
           style={{ left: rect.x, top: rect.y, width: rect.width, height: rect.height }}
         >
-          <span className={styles.size} data-inside={rect.y < LABEL_SPACE}>
+          <span className={styles.size} data-inside={rect.y < LABEL_SPACE} data-small={!isLargeEnough(rect)}>
             {Math.round(rect.width)} x {Math.round(rect.height)}
           </span>
         </div>

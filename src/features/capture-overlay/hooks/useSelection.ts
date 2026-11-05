@@ -1,8 +1,6 @@
 import { useCallback, useState, type PointerEvent } from 'react'
-import { rectFromPoints, type Point } from '@/shared/lib/geometry'
+import { isLargeEnough, rectFromPoints, type Point } from '@/shared/lib/geometry'
 import type { SelectionRect } from '@/shared/types/ipc'
-
-const MIN_SIZE = 8
 
 interface SelectionCallbacks {
   onBegin(): void
@@ -48,7 +46,7 @@ export function useSelection({ onBegin, onComplete, onCancel }: SelectionCallbac
     if (remote || !start || event.button !== 0) return
     const rect = rectFromPoints(start, pointOf(event))
     reset()
-    if (rect.width < MIN_SIZE || rect.height < MIN_SIZE) {
+    if (!isLargeEnough(rect)) {
       onCancel()
     } else {
       onComplete(rect)

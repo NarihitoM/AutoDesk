@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { placePanel, toPhysicalRect } from './geometry'
+import { isLargeEnough } from '@/shared/lib/geometry'
 
 describe('toPhysicalRect', () => {
   const rect = { x: 100, y: 50, width: 200, height: 120 }
@@ -48,5 +49,13 @@ describe('placePanel', () => {
   it('respects a work area on a second monitor', () => {
     const second = { x: 1920, y: 0, width: 1920, height: 1040 }
     expect(placePanel({ x: 2000, y: 100, width: 200, height: 200 }, size, second)).toEqual({ x: 2212, y: 100 })
+  })
+})
+
+describe('isLargeEnough', () => {
+  it('rejects selections under 32 px on either side', () => {
+    expect(isLargeEnough({ x: 0, y: 0, width: 31, height: 200 })).toBe(false)
+    expect(isLargeEnough({ x: 0, y: 0, width: 200, height: 12 })).toBe(false)
+    expect(isLargeEnough({ x: 0, y: 0, width: 32, height: 32 })).toBe(true)
   })
 })

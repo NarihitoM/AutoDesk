@@ -91,7 +91,7 @@ Hold the **right mouse button**, drag over part of your screen, and let go. The 
 | --- | --- |
 | Capture an area | Hold the right mouse button and drag |
 | Open a normal context menu | Right-click without dragging |
-| Cancel a capture | <kbd>Esc</kbd> while dragging, or drag a box smaller than 8 px |
+| Cancel a capture | <kbd>Esc</kbd> while dragging, or drag a box smaller than 32 px. Small boxes are never sent. |
 | Ask a follow-up | Type in the panel and press <kbd>Enter</kbd> (<kbd>Shift</kbd>+<kbd>Enter</kbd> adds a new line) |
 | Stop a reply | Click **Stop** |
 | Close the panel | <kbd>Esc</kbd> or **Close** |

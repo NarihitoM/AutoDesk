@@ -29,6 +29,10 @@
   white-space: nowrap;
 }
 
+.size[data-small='true'] {
+  color: var(--danger);
+}
+
 .size[data-inside='true'] {
   top: 6px;
   left: 6px;
