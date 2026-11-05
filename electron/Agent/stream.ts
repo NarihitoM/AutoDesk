@@ -2,6 +2,18 @@ import { describeFailure } from './http'
 import { SseParser } from './sse'
 import type { ChatRequest, VisionProvider } from './types'
 
+const NO_IMAGE_SUPPORT =
+  /content must be a string|image_url[^.]*only supported|(image|vision|multimodal)[^.]*(not supported|unsupported|does not support|doesn't support)|(not support|does not support|doesn't support|unsupported)[^.]*(image|vision)/i
+
+const IGNORED_STATUSES = new Set([401, 403, 429])
+
+export function explainChatFailure(status: number, failure: string, model: string): string {
+  if (!IGNORED_STATUSES.has(status) && NO_IMAGE_SUPPORT.test(failure)) {
+    return `${model} cannot read images. Open Settings and choose a vision model, such as one with "vision", "vl", or "llama-4" in its name.`
+  }
+  return failure
+}
+
 export async function* streamChat(
   provider: VisionProvider,
   request: ChatRequest,
@@ -15,7 +27,9 @@ export async function* streamChat(
     signal
   })
 
-  if (!response.ok) throw new Error(await describeFailure(response))
+  if (!response.ok) {
+    throw new Error(explainChatFailure(response.status, await describeFailure(response), request.model))
+  }
   if (!response.body) throw new Error('The provider returned an empty response.')
 
   const reader = response.body.getReader()
