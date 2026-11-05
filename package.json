@@ -16,6 +16,8 @@
     "preview": "electron-vite preview",
     "typecheck": "tsc --noEmit --composite false -p tsconfig.node.json && tsc --noEmit --composite false -p tsconfig.web.json",
     "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ci": "vitest run --reporter=default --reporter=github-actions --reporter=junit --outputFile.junit=reports/junit.xml",
     "dist": "electron-vite build && electron-builder --win"
   },
   "build": {
