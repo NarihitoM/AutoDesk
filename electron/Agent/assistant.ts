@@ -1,19 +1,34 @@
 import { KEY_REQUIRED } from '@/shared/lib/providers'
 import type { PanelEvent, PanelState } from '@/shared/types/ipc'
+import type { ProviderConfig, ProviderId } from '@/shared/types/settings'
 import { getApiKey, getSettings } from '../settings/settingsStore'
 import { hidePanel, sendPanelEvent } from '../tools/windows'
-import { ChatSession, type SessionTarget } from './chatSession'
+import { ChatSession, type ImageRoute, type SessionTarget } from './chatSession'
+import { findModel } from './models/cache'
 import { providers } from './providers'
 
 let session: ChatSession | null = null
 
-function resolveTarget(): SessionTarget {
+async function resolveRoute(provider: ProviderId, config: ProviderConfig, apiKey: string | null): Promise<ImageRoute> {
+  if (!config.model) return { kind: 'direct', fallback: null }
+  const { selected, vision } = await findModel(provider, config.baseUrl, apiKey, config.model)
+  if (selected?.images === 'yes') return { kind: 'direct', fallback: null }
+
+  const reader = config.imageModel || vision.find((model) => model.id !== config.model)?.id || null
+  if (selected?.images === 'no') return reader ? { kind: 'reader', model: reader } : { kind: 'unavailable' }
+  return { kind: 'direct', fallback: reader }
+}
+
+async function resolveTarget(): Promise<SessionTarget> {
   const { activeProvider, providers: configs } = getSettings()
+  const config = configs[activeProvider]
+  const apiKey = getApiKey(activeProvider)
   return {
     provider: providers[activeProvider],
-    config: configs[activeProvider],
-    apiKey: getApiKey(activeProvider),
-    keyRequired: KEY_REQUIRED[activeProvider]
+    config,
+    apiKey,
+    keyRequired: KEY_REQUIRED[activeProvider],
+    route: await resolveRoute(activeProvider, config, apiKey)
   }
 }
 
@@ -29,11 +44,12 @@ export function startSession(png: Buffer): void {
   )
   session = created
   sendPanelEvent({ type: 'snapshot', state: created.snapshot() })
-  void created.ask(settings.prompt, resolveTarget())
+  void resolveTarget().then((target) => created.ask(settings.prompt, target))
 }
 
 export function askFollowUp(text: string): void {
-  void session?.ask(text, resolveTarget())
+  const current = session
+  if (current) void resolveTarget().then((target) => current.ask(text, target))
 }
 
 export function stopReply(): void {

@@ -1,9 +1,9 @@
-import type { ModelListResult, ModelOption } from '@/shared/types/models'
+import type { ImageSupport, ModelListResult, ModelOption } from '@/shared/types/models'
 import { asArray, asText, pick } from '../../lib/json'
 import { getJson, postJson } from '../http'
 import { joinUrl } from '../types'
 import { listCompatibleModels } from './compatible'
-import { byLabel, isLikelyVisionModel, type ModelCatalog } from './types'
+import { guessImages, sortModels, type ModelCatalog } from './types'
 
 interface OllamaModel {
   id: string
@@ -14,24 +14,24 @@ function serverRoot(baseUrl: string): string {
   return baseUrl.replace(/\/v1\/?$/, '')
 }
 
-export function pickOllamaVisionModels(models: OllamaModel[]): ModelListResult {
-  const reported = models.some((model) => Array.isArray(model.capabilities))
-  const options: ModelOption[] = models
-    .filter((model) =>
-      reported ? asArray(model.capabilities).includes('vision') : isLikelyVisionModel(model.id)
-    )
-    .map(({ id }) => ({ id, label: id }))
-  return { models: options.sort(byLabel), visionFilter: reported ? 'verified' : 'name-based' }
+function ollamaImages(model: OllamaModel): ImageSupport {
+  if (!Array.isArray(model.capabilities)) return guessImages(model.id)
+  return asArray(model.capabilities).includes('vision') ? 'yes' : 'no'
+}
+
+export function parseOllamaModels(models: OllamaModel[]): ModelListResult {
+  return { models: sortModels(models.map((model) => ({ id: model.id, label: model.id, images: ollamaImages(model) }))) }
 }
 
 export function parseLmStudioModels(payload: unknown): ModelListResult | null {
   const entries = asArray(pick(payload, 'data'))
   if (!entries.some((item) => typeof pick(item, 'type') === 'string')) return null
-  const models = entries.flatMap((item) => {
+  const models = entries.flatMap((item): ModelOption[] => {
     const id = asText(pick(item, 'id'))
-    return id && pick(item, 'type') === 'vlm' ? [{ id, label: id }] : []
+    if (!id) return []
+    return [{ id, label: id, images: pick(item, 'type') === 'vlm' ? 'yes' : 'no' }]
   })
-  return { models: models.sort(byLabel), visionFilter: 'verified' }
+  return { models: sortModels(models) }
 }
 
 export const listOllamaModels: ModelCatalog = async ({ baseUrl }) => {
@@ -52,7 +52,7 @@ export const listOllamaModels: ModelCatalog = async ({ baseUrl }) => {
       }
     })
   )
-  return pickOllamaVisionModels(models)
+  return parseOllamaModels(models)
 }
 
 export const listLmStudioModels: ModelCatalog = async (request) => {

@@ -1,24 +1,30 @@
 import { describe, expect, it } from 'vitest'
-import { explainChatFailure } from './stream'
+import { explainChatFailure, ImageNotSupportedError } from './stream'
 
 describe('explainChatFailure', () => {
-  it('explains when a text-only model rejects the image', () => {
-    const groq = '400 Bad Request: messages[0].content must be a string'
-    expect(explainChatFailure(400, groq, 'openai/gpt-oss-20b')).toMatch(/^openai\/gpt-oss-20b cannot read images\./)
-
-    const openai = '400 Bad Request: Invalid content type. image_url is only supported by certain models.'
-    expect(explainChatFailure(400, openai, 'gpt-3.5-turbo')).toMatch(/cannot read images/)
-
-    const ollama = '500 Internal Server Error: model does not support images'
-    expect(explainChatFailure(500, ollama, 'llama3')).toMatch(/^llama3 cannot read images\./)
+  it('flags a text-only model that rejects the image', () => {
+    const cases: [number, string, string][] = [
+      [400, '400 Bad Request: messages[0].content must be a string', 'openai/gpt-oss-20b'],
+      [400, '400 Bad Request: Invalid content type. image_url is only supported by certain models.', 'gpt-3.5-turbo'],
+      [500, '500 Internal Server Error: model does not support images', 'llama3']
+    ]
+    for (const [status, failure, model] of cases) {
+      const error = explainChatFailure(status, failure, model)
+      expect(error).toBeInstanceOf(ImageNotSupportedError)
+      expect(error.message.startsWith(`${model} cannot read images.`)).toBe(true)
+    }
   })
 
   it('keeps other errors unchanged', () => {
-    const auth = '401 Unauthorized: Invalid API key'
-    expect(explainChatFailure(401, auth, 'gpt-5')).toBe(auth)
-    const download = '400 Bad Request: Invalid image_url: failed to download the file'
-    expect(explainChatFailure(400, download, 'gpt-5')).toBe(download)
-    const limit = '429 Too Many Requests: Rate limit reached'
-    expect(explainChatFailure(429, limit, 'gpt-5')).toBe(limit)
+    const cases: [number, string][] = [
+      [401, '401 Unauthorized: Invalid API key'],
+      [400, '400 Bad Request: Invalid image_url: failed to download the file'],
+      [429, '429 Too Many Requests: Rate limit reached']
+    ]
+    for (const [status, failure] of cases) {
+      const error = explainChatFailure(status, failure, 'gpt-5')
+      expect(error).not.toBeInstanceOf(ImageNotSupportedError)
+      expect(error.message).toBe(failure)
+    }
   })
 })

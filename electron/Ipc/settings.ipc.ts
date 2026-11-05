@@ -2,7 +2,7 @@ import { ipcMain } from 'electron'
 import { Channels } from '@/shared/lib/channels'
 import { KEY_REQUIRED } from '@/shared/lib/providers'
 import type { ModelListResponse } from '@/shared/types/models'
-import { modelCatalogs } from '../Agent/models'
+import { loadModels } from '../Agent/models/cache'
 import { sanitizeModelListRequest } from '../settings/sanitize'
 import { getApiKey, getSettingsView, openDataDirectory, saveSettings } from '../settings/settingsStore'
 import { closeSettingsWindow, isSettingsSender, setSettingsDirty } from '../tools/windows'
@@ -38,7 +38,7 @@ export function registerSettingsIpc(): void {
       if (KEY_REQUIRED[request.provider] && !apiKey) {
         return { ok: false, error: 'Add an API key to load the model list.' }
       }
-      const result = await modelCatalogs[request.provider]({ baseUrl: request.baseUrl, apiKey })
+      const result = await loadModels(request.provider, request.baseUrl, apiKey, true)
       return { ok: true, result }
     } catch (error) {
       return { ok: false, error: error instanceof Error ? error.message : 'Could not load models.' }

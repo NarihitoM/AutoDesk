@@ -1,10 +1,11 @@
 import type { ProviderId } from './settings'
 
-export type VisionFilter = 'verified' | 'name-based' | 'none'
+export type ImageSupport = 'yes' | 'no' | 'unknown'
 
 export interface ModelOption {
   id: string
   label: string
+  images: ImageSupport
 }
 
 export interface ModelListRequest {
@@ -15,7 +16,6 @@ export interface ModelListRequest {
 
 export interface ModelListResult {
   models: ModelOption[]
-  visionFilter: VisionFilter
 }
 
 export type ModelListResponse = { ok: true; result: ModelListResult } | { ok: false; error: string }

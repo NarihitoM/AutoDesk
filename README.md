@@ -40,7 +40,7 @@ AutoDesk is a lightweight Windows tray app that turns any part of your screen in
     </td>
     <td width="50%" valign="top">
       <h4>Your choice of AI</h4>
-      OpenAI, Claude, Gemini, Groq, OpenRouter, or a free local model through Ollama or LM Studio. The model list loads live and shows only models that can read images.
+      OpenAI, Claude, Gemini, Groq, OpenRouter, or a free local model through Ollama or LM Studio. Every model loads live from the provider, and models that cannot read images still work through an image reader.
     </td>
   </tr>
   <tr>
@@ -79,7 +79,7 @@ AutoDesk is a lightweight Windows tray app that turns any part of your screen in
 | LM Studio (local, free) | Install [LM Studio](https://lmstudio.ai), load a vision model, and start the local server | No |
 | Custom | Any server with an OpenAI-compatible API | Optional |
 
-Open **Settings** from the tray icon, pick the provider, paste the key, and choose a model. The model list is fetched live from the provider and filtered to models that accept images. Click **Save** when you are done.
+Open **Settings** from the tray icon, pick the provider, paste the key, and choose a model. The model list is fetched live from the provider, and models that can read screenshots are tagged **Images**. Click **Save** when you are done.
 
 **2. Capture**
 
@@ -103,7 +103,8 @@ Hold the **right mouse button**, drag over part of your screen, and let go. The 
 | --- | --- |
 | AI provider | Which service answers your captures |
 | API key | Your key for that provider. Optional for local servers. |
-| Model | A dropdown of the provider's live model list, showing only models that accept images. It stays empty until the provider is connected. |
+| Model | A dropdown of every model the provider offers, tagged **Images** or **Text only**. It stays empty until the provider is connected. |
+| Image reader | Shown when the chosen model cannot read images. This model describes the screenshot, and your chosen model answers from that description. **Automatic** picks the first model tagged Images. |
 | Base URL | Change only for a proxy or a self-hosted server |
 | Capture key | Right mouse button (default), or hold <kbd>Alt</kbd>, <kbd>Ctrl</kbd>, or <kbd>Shift</kbd> and left-drag |
 | Prompt | The instruction sent with every capture |
@@ -130,7 +131,7 @@ No model is preselected. Pick one from the live list after connecting.
 </details>
 
 <details>
-<summary><b>How the model list knows which models accept images</b></summary>
+<summary><b>How AutoDesk knows which models read images</b></summary>
 <br />
 
 | Provider | Source of the list | How image support is detected |
@@ -140,7 +141,10 @@ No model is preselected. Pick one from the live list after connecting.
 | Ollama | `/api/tags` and `/api/show` | The model's capabilities include `vision` |
 | LM Studio | `/api/v0/models` | The model type is `vlm` |
 | OpenAI, Gemini | Models API | Matched by model family, since these APIs do not report image support |
-| Groq, Custom | `/models` | Matched by model name. If nothing matches, every model is shown. |
+| Groq, Custom | `/models` | Matched by model name. Others are left untagged. |
+
+
+When the chosen model cannot read images, AutoDesk sends the screenshot to the image reader first and passes its description to your model. If image support is unknown, AutoDesk sends the screenshot directly and falls back to the image reader only if the provider rejects it. Follow-up questions reuse the same description.
 
 </details>
 

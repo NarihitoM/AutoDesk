@@ -72,7 +72,9 @@ export function ProviderForm(props: ProviderFormProps) {
         apiKey={draft || undefined}
         canFetch={canFetchModels}
         value={config.model}
+        imageModel={config.imageModel}
         onChange={(model) => onConfigChange({ ...config, model })}
+        onImageModelChange={(imageModel) => onConfigChange({ ...config, imageModel })}
       />
 
       <label className={styles.field}>

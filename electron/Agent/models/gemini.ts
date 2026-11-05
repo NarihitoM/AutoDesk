@@ -1,19 +1,24 @@
-import type { ModelOption } from '@/shared/types/models'
+import type { ImageSupport, ModelOption } from '@/shared/types/models'
 import { asArray, asText, pick } from '../../lib/json'
 import { getJson } from '../http'
 import { joinUrl } from '../types'
-import type { ModelCatalog } from './types'
+import { guessImages, sortModels, type ModelCatalog } from './types'
 
 const MAX_PAGES = 5
 const NOT_VISION_CHAT = /(embedding|aqa|tts|image|imagen|veo|live|native-audio|robotics|computer-use)/
 
+function geminiImages(id: string, methods: unknown[]): ImageSupport {
+  if (!methods.includes('generateContent')) return 'no'
+  if (id.startsWith('gemini') && !NOT_VISION_CHAT.test(id)) return 'yes'
+  return guessImages(id)
+}
+
 export function parseGeminiModels(payload: unknown): ModelOption[] {
-  return asArray(pick(payload, 'models')).flatMap((item) => {
+  return asArray(pick(payload, 'models')).flatMap((item): ModelOption[] => {
     const id = (asText(pick(item, 'name')) ?? '').replace(/^models\//, '')
-    const methods = asArray(pick(item, 'supportedGenerationMethods'))
-    if (!id.startsWith('gemini') || NOT_VISION_CHAT.test(id) || !methods.includes('generateContent')) return []
-    const name = asText(pick(item, 'displayName'))
-    return [{ id, label: name ?? id }]
+    if (!id) return []
+    const label = asText(pick(item, 'displayName')) ?? id
+    return [{ id, label, images: geminiImages(id, asArray(pick(item, 'supportedGenerationMethods'))) }]
   })
 }
 
@@ -30,5 +35,5 @@ export const listGeminiModels: ModelCatalog = async ({ baseUrl, apiKey }) => {
     if (!pageToken) break
   }
 
-  return { models, visionFilter: 'name-based' }
+  return { models: sortModels(models) }
 }

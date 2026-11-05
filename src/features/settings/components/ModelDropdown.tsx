@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
-import type { ModelOption } from '@/shared/types/models'
+import type { ImageSupport, ModelOption } from '@/shared/types/models'
 import styles from './Settings.module.css'
 
 const TYPE_AHEAD_RESET_MS = 700
@@ -12,6 +12,17 @@ interface ModelDropdownProps {
   placeholder: string
   disabled: boolean
   onChange(model: string): void
+}
+
+const IMAGE_TAGS: Record<ImageSupport, string | null> = { yes: 'Images', no: 'Text only', unknown: null }
+
+function ImageTag({ images }: { images: ImageSupport }) {
+  const tag = IMAGE_TAGS[images]
+  return tag ? (
+    <span className={styles.tag} data-images={images}>
+      {tag}
+    </span>
+  ) : null
 }
 
 function findMatch(options: readonly ModelOption[], query: string, from: number): number {
@@ -136,9 +147,12 @@ export function ModelDropdown({ id, value, options, caption, placeholder, disabl
           </span>
           {selected && selected.label !== selected.id && <span className={styles.optionId}>{selected.id}</span>}
         </span>
-        <svg className={styles.chevron} viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-          <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+        <span className={styles.optionMeta}>
+          {selected && <ImageTag images={selected.images} />}
+          <svg className={styles.chevron} viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+            <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
       </button>
 
       {open && !disabled && (
@@ -168,11 +182,14 @@ export function ModelDropdown({ id, value, options, caption, placeholder, disabl
                   <span className={styles.optionLabel}>{option.label}</span>
                   {option.label !== option.id && <span className={styles.optionId}>{option.id}</span>}
                 </span>
-                {option.id === value && (
-                  <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" className={styles.check}>
-                    <path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                )}
+                <span className={styles.optionMeta}>
+                  <ImageTag images={option.images} />
+                  {option.id === value && (
+                    <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" className={styles.check}>
+                      <path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                </span>
               </li>
             ))}
           </ul>

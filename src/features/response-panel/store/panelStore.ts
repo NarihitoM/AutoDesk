@@ -17,6 +17,13 @@ function reduce(state: PanelState | null, event: PanelEvent): PanelState | null 
         streaming: state.streaming || event.message.role === 'assistant',
         messages: [...state.messages, event.message]
       }
+    case 'note':
+      return {
+        ...state,
+        messages: state.messages.map((message) =>
+          message.id === event.messageId ? { ...message, note: event.note } : message
+        )
+      }
     case 'delta':
       return {
         ...state,

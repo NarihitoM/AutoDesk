@@ -347,6 +347,31 @@
   font-weight: 600;
 }
 
+.optionMeta {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+}
+
+.tag {
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tag[data-images='yes'] {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.tag[data-images='no'] {
+  background: var(--surface-hover);
+  color: var(--text-muted);
+}
+
 .check {
   flex: none;
   color: var(--accent);

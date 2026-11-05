@@ -277,3 +277,14 @@
 .secondaryButton:hover {
   background: var(--surface-hover);
 }
+
+.note {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 6px;
+  padding: 3px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: 12px;
+}

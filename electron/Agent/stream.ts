@@ -7,11 +7,15 @@ const NO_IMAGE_SUPPORT =
 
 const IGNORED_STATUSES = new Set([401, 403, 429])
 
-export function explainChatFailure(status: number, failure: string, model: string): string {
+export class ImageNotSupportedError extends Error {}
+
+export function explainChatFailure(status: number, failure: string, model: string): Error {
   if (!IGNORED_STATUSES.has(status) && NO_IMAGE_SUPPORT.test(failure)) {
-    return `${model} cannot read images. Open Settings and choose a vision model, such as one with "vision", "vl", or "llama-4" in its name.`
+    return new ImageNotSupportedError(
+      `${model} cannot read images. Open Settings and choose a model tagged Images, or set an image reader.`
+    )
   }
-  return failure
+  return new Error(failure)
 }
 
 export async function* streamChat(
@@ -28,7 +32,7 @@ export async function* streamChat(
   })
 
   if (!response.ok) {
-    throw new Error(explainChatFailure(response.status, await describeFailure(response), request.model))
+    throw explainChatFailure(response.status, await describeFailure(response), request.model)
   }
   if (!response.body) throw new Error('The provider returned an empty response.')
 

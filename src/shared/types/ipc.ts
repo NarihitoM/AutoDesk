@@ -14,6 +14,7 @@ export interface PanelMessage {
   id: string
   role: ChatRole
   text: string
+  note?: string
   error?: string
 }
 
@@ -28,6 +29,7 @@ export interface PanelState {
 export type PanelEvent =
   | { type: 'snapshot'; state: PanelState }
   | { type: 'message'; message: PanelMessage }
+  | { type: 'note'; messageId: string; note: string }
   | { type: 'delta'; messageId: string; text: string }
   | { type: 'done'; messageId: string; error?: string }
 

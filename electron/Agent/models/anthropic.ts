@@ -1,30 +1,28 @@
-import type { ModelListResult } from '@/shared/types/models'
-import { asArray, asText, pick } from '../../lib/json'
-import { getJson } from '../http'
+import type { ImageSupport, ModelListResult, ModelOption } from '@/shared/types/models'
+import { asText, pick } from '../../lib/json'
 import { API_VERSION } from '../providers/anthropic'
-import { joinUrl } from '../types'
-import type { ModelCatalog } from './types'
+import { fetchModelPages } from './paging'
+import { sortModels, type ModelCatalog } from './types'
 
-export function parseAnthropicModels(payload: unknown): ModelListResult {
-  const entries = asArray(pick(payload, 'data')).map((item) => {
-    const id = asText(pick(item, 'id')) ?? ''
-    const name = asText(pick(item, 'display_name'))
-    const imageInput = pick(item, 'capabilities', 'image_input', 'supported')
-    return { id, label: name ?? id, imageInput }
+function imageSupport(value: unknown): ImageSupport {
+  if (value === true) return 'yes'
+  if (value === false) return 'no'
+  return 'unknown'
+}
+
+export function parseAnthropicModels(items: unknown[]): ModelListResult {
+  const models = items.flatMap((item): ModelOption[] => {
+    const id = asText(pick(item, 'id'))
+    if (!id) return []
+    const label = asText(pick(item, 'display_name')) ?? id
+    return [{ id, label, images: imageSupport(pick(item, 'capabilities', 'image_input', 'supported')) }]
   })
-
-  const verified = entries.some((entry) => typeof entry.imageInput === 'boolean')
-  return {
-    models: entries
-      .filter((entry) => entry.id && entry.imageInput !== false)
-      .map(({ id, label }) => ({ id, label })),
-    visionFilter: verified ? 'verified' : 'name-based'
-  }
+  return { models: sortModels(models) }
 }
 
 export const listAnthropicModels: ModelCatalog = async ({ baseUrl, apiKey }) => {
   const headers: Record<string, string> = { 'anthropic-version': API_VERSION }
   if (apiKey) headers['x-api-key'] = apiKey
-  const payload = await getJson(joinUrl(baseUrl, 'v1/models?limit=1000'), headers)
-  return parseAnthropicModels(payload)
+  const items = await fetchModelPages(baseUrl, 'v1/models?limit=1000', headers, 'after_id')
+  return parseAnthropicModels(items)
 }

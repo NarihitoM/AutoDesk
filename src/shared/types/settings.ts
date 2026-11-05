@@ -16,6 +16,7 @@ export type ThemeMode = 'system' | 'light' | 'dark'
 
 export interface ProviderConfig {
   model: string
+  imageModel: string
   baseUrl: string
 }
 

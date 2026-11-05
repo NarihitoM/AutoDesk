@@ -22,6 +22,7 @@ export function MessageItem({ message, pending }: MessageItemProps) {
 
   return (
     <div className={styles.answer}>
+      {message.note && <div className={styles.note}>{message.note}</div>}
       {message.text && <Markdown components={markdownComponents}>{message.text}</Markdown>}
       {pending && !message.text && (
         <div className={styles.thinking} aria-label="Waiting for the answer">
