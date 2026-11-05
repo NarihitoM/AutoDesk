@@ -23,6 +23,7 @@ export default defineConfig({
   },
   renderer: {
     root: '.',
+    publicDir: false,
     resolve: { alias },
     plugins: [react()],
     build: {

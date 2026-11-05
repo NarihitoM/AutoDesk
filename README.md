@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="public/img/autodesk-banner.png" alt="AutoDesk - Screen to AI. Instant answers." width="720" />
+</p>
+
 # AutoDesk
 
 Snip any part of your screen and ask AI about it.

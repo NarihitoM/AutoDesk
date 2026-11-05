@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import banner from '@/shared/assets/autodesk-banner.png'
 import { bridge } from '@/shared/lib/bridge'
 import { usePanelEvents } from '../hooks/usePanelEvents'
 import { usePanelStore } from '../store/panelStore'
@@ -71,7 +72,10 @@ export function ResponsePanel() {
             ))}
           </>
         ) : (
-          <p className={styles.empty}>Hold the capture key and drag over your screen to ask about it.</p>
+          <div className={styles.empty}>
+            <img className={styles.emptyBanner} src={banner} alt="AutoDesk" />
+            <p>Hold the capture key and drag over your screen to ask about it.</p>
+          </div>
         )}
       </div>
 
