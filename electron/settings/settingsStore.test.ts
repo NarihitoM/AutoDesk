@@ -17,9 +17,10 @@ vi.mock('electron', () => ({
     setLoginItemSettings: vi.fn()
   },
   safeStorage: {
-    isEncryptionAvailable: () => true,
-    encryptString: (value: string) => Buffer.from(`sealed:${value}`),
-    decryptString: (buffer: Buffer) => buffer.toString().replace(/^sealed:/, '')
+    isAsyncEncryptionAvailable: () => Promise.resolve(true),
+    encryptStringAsync: (value: string) => Promise.resolve(Buffer.from(`sealed:${value}`)),
+    decryptStringAsync: (buffer: Buffer) =>
+      Promise.resolve({ result: buffer.toString().replace(/^sealed:/, ''), shouldReEncrypt: false })
   },
   shell: { openPath: vi.fn() }
 }))
@@ -27,7 +28,7 @@ vi.mock('electron', () => ({
 async function loadStore() {
   vi.resetModules()
   const store = await import('./settingsStore')
-  store.loadSettings()
+  await store.loadSettings()
   return store
 }
 
@@ -60,7 +61,7 @@ describe('settingsStore', () => {
 
   it('stores API keys encrypted and reads them back', async () => {
     const store = await loadStore()
-    store.saveSettings({ settings: store.getSettings(), keys: { groq: { action: 'set', value: 'gsk_secret' } } })
+    await store.saveSettings({ settings: store.getSettings(), keys: { groq: { action: 'set', value: 'gsk_secret' } } })
 
     const raw = readFileSync(join(paths.home, '.autodesk', 'credentials.json'), 'utf8')
     expect(raw).not.toContain('gsk_secret')
@@ -74,8 +75,8 @@ describe('settingsStore', () => {
 
   it('removes a key when it is cleared', async () => {
     const store = await loadStore()
-    store.saveSettings({ settings: store.getSettings(), keys: { openai: { action: 'set', value: 'sk-1' } } })
-    store.saveSettings({ settings: store.getSettings(), keys: { openai: { action: 'clear' } } })
+    await store.saveSettings({ settings: store.getSettings(), keys: { openai: { action: 'set', value: 'sk-1' } } })
+    await store.saveSettings({ settings: store.getSettings(), keys: { openai: { action: 'clear' } } })
     expect(store.getApiKey('openai')).toBeNull()
     expect(readJson(join(paths.home, '.autodesk', 'credentials.json'))).toEqual({})
   })

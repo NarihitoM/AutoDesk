@@ -19,6 +19,7 @@ const CREDENTIALS_FILE = join(DATA_DIRECTORY, 'credentials.json')
 
 let settings: Settings = defaultSettings()
 let keys: StoredKeys = {}
+let secrets: StoredKeys = {}
 const listeners = new Set<SettingsListener>()
 
 function readJsonFile(path: string): unknown {
@@ -35,32 +36,55 @@ function writeJsonFile(path: string, value: unknown): void {
   writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`, { encoding: 'utf8', mode: 0o600 })
 }
 
-function encrypt(value: string): string {
-  if (!safeStorage.isEncryptionAvailable()) {
+async function encrypt(value: string): Promise<string> {
+  if (!(await safeStorage.isAsyncEncryptionAvailable())) {
     throw new Error('Secure storage is not available, so the API key cannot be saved.')
   }
-  return ENCRYPTED_PREFIX + safeStorage.encryptString(value).toString('base64')
+  const sealed = await safeStorage.encryptStringAsync(value)
+  return ENCRYPTED_PREFIX + sealed.toString('base64')
 }
 
-function readKeys(raw: unknown, legacyEncrypted: boolean): { keys: StoredKeys; changed: boolean } {
-  const result: StoredKeys = {}
+async function decrypt(stored: string): Promise<{ value: string; reseal: boolean } | null> {
+  try {
+    const sealed = Buffer.from(stored.slice(ENCRYPTED_PREFIX.length), 'base64')
+    const { result, shouldReEncrypt } = await safeStorage.decryptStringAsync(sealed)
+    return { value: result, reseal: shouldReEncrypt }
+  } catch {
+    return null
+  }
+}
+
+async function readKeys(raw: unknown, legacyEncrypted: boolean): Promise<boolean> {
+  const canEncrypt = await safeStorage.isAsyncEncryptionAvailable()
   let changed = false
+  keys = {}
+  secrets = {}
+
   for (const id of PROVIDER_IDS) {
-    const value = asText(pick(raw, id))?.trim()
-    if (!value) continue
-    if (value.startsWith(ENCRYPTED_PREFIX)) {
-      result[id] = value
-    } else if (legacyEncrypted) {
-      result[id] = ENCRYPTED_PREFIX + value
+    const text = asText(pick(raw, id))?.trim()
+    if (!text) continue
+
+    const stored = legacyEncrypted && !text.startsWith(ENCRYPTED_PREFIX) ? ENCRYPTED_PREFIX + text : text
+    if (stored !== text) changed = true
+
+    if (!stored.startsWith(ENCRYPTED_PREFIX)) {
+      secrets[id] = stored
+      keys[id] = canEncrypt ? await encrypt(stored) : stored
+      changed ||= canEncrypt
+      continue
+    }
+
+    const opened = await decrypt(stored)
+    keys[id] = stored
+    if (!opened) continue
+    secrets[id] = opened.value
+    if (opened.reseal && canEncrypt) {
+      keys[id] = await encrypt(opened.value)
       changed = true
-    } else if (safeStorage.isEncryptionAvailable()) {
-      result[id] = encrypt(value)
-      changed = true
-    } else {
-      result[id] = value
     }
   }
-  return { keys: result, changed }
+
+  return changed
 }
 
 function persist(): void {
@@ -73,7 +97,7 @@ function applyLoginItem(next: Settings): void {
   app.setLoginItemSettings({ openAtLogin: next.launchAtStartup })
 }
 
-export function loadSettings(): void {
+export async function loadSettings(): Promise<void> {
   mkdirSync(DATA_DIRECTORY, { recursive: true })
 
   let rawSettings = readJsonFile(SETTINGS_FILE)
@@ -87,11 +111,10 @@ export function loadSettings(): void {
     legacyEncrypted = rawKeys !== null
   }
 
-  const loaded = readKeys(rawKeys, legacyEncrypted)
   settings = sanitizeSettings(rawSettings)
-  keys = loaded.keys
+  const changed = await readKeys(rawKeys, legacyEncrypted)
 
-  if (!existsSync(SETTINGS_FILE) || !existsSync(CREDENTIALS_FILE) || loaded.changed) persist()
+  if (!existsSync(SETTINGS_FILE) || !existsSync(CREDENTIALS_FILE) || changed) persist()
 }
 
 export function getSettings(): Settings {
@@ -99,14 +122,7 @@ export function getSettings(): Settings {
 }
 
 export function getApiKey(id: ProviderId): string | null {
-  const stored = keys[id]
-  if (!stored) return null
-  if (!stored.startsWith(ENCRYPTED_PREFIX)) return stored
-  try {
-    return safeStorage.decryptString(Buffer.from(stored.slice(ENCRYPTED_PREFIX.length), 'base64'))
-  } catch {
-    return null
-  }
+  return secrets[id] ?? null
 }
 
 export function getSettingsView(): SettingsView {
@@ -117,22 +133,29 @@ export function getSettingsView(): SettingsView {
   }
 }
 
-export function saveSettings(raw: unknown): SettingsView {
+export async function saveSettings(raw: unknown): Promise<SettingsView> {
   const update: SettingsUpdate = {
     settings: sanitizeSettings(pick(raw, 'settings')),
     keys: sanitizeKeyChanges(pick(raw, 'keys'))
   }
 
   const nextKeys = { ...keys }
+  const nextSecrets = { ...secrets }
   for (const id of PROVIDER_IDS) {
     const change = update.keys[id]
     if (!change) continue
-    if (change.action === 'clear') delete nextKeys[id]
-    else nextKeys[id] = encrypt(change.value)
+    if (change.action === 'clear') {
+      delete nextKeys[id]
+      delete nextSecrets[id]
+    } else {
+      nextKeys[id] = await encrypt(change.value)
+      nextSecrets[id] = change.value
+    }
   }
 
   settings = update.settings
   keys = nextKeys
+  secrets = nextSecrets
   persist()
   applyLoginItem(settings)
   for (const listener of listeners) listener(settings)

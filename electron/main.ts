@@ -24,9 +24,9 @@ function needsSetup(): boolean {
   return KEY_REQUIRED[activeProvider] && !getApiKey(activeProvider)
 }
 
-function bootstrap(): void {
+async function bootstrap(): Promise<void> {
   app.setAppUserModelId('com.autodesk.snip')
-  loadSettings()
+  await loadSettings()
   createOverlayWindow()
   createPanelWindow()
 
@@ -59,7 +59,7 @@ function bootstrap(): void {
   onSettingsChanged(() => tray.refresh())
 
   startInputHook(trigger)
-  if (needsSetup()) openSettingsWindow()
+  if (needsSetup() || !app.isPackaged) openSettingsWindow()
 }
 
 if (!app.requestSingleInstanceLock()) {
