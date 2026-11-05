@@ -102,7 +102,7 @@ Hold **Alt**, drag over part of your screen, and let go. The answer appears in a
 | --- | --- |
 | AI provider | Which service answers your captures |
 | API key | Your key for that provider. Optional for local servers. |
-| Model | Picked from the provider's live model list, showing only models that accept images. You can also type any model ID. |
+| Model | A dropdown of the provider's live model list, showing only models that accept images. Before a key is added, it shows suggested models. |
 | Base URL | Change only for a proxy or a self-hosted server |
 | Capture key | <kbd>Alt</kbd>, <kbd>Ctrl</kbd>, or <kbd>Shift</kbd> |
 | Prompt | The instruction sent with every capture |
@@ -144,7 +144,16 @@ Hold **Alt**, drag over part of your screen, and let go. The answer appears in a
 
 - A screenshot is taken only when you finish a drag, and only of the area you selected.
 - The image and your questions go directly from your PC to the provider you chose. There is no AutoDesk server in between.
-- Settings are stored in `%APPDATA%\AutoDesk\settings.json`. API keys in that file are encrypted with Windows' built-in data protection.
+- Everything is stored locally in a `.autodesk` folder in your user profile, created the first time you open the app:
+
+  ```
+  C:\Users\<you>\.autodesk\
+    settings.json       provider, models, prompt, capture key
+    credentials.json    API keys, encrypted for your Windows account
+  ```
+
+- API keys are encrypted with Windows' built-in data protection, so the file cannot be read on another PC or by another Windows user. If you paste a plain key into `credentials.json` by hand, AutoDesk encrypts it the next time it starts.
+- Click **Open folder** in Settings to jump to this folder.
 
 ## Development
 
@@ -230,4 +239,4 @@ The Release workflow sets the app version from the tag, runs the checks, builds 
 | The panel says to add an API key | Open Settings from the tray icon, paste a key for the selected provider, and click Save. |
 | A local model ignores the image | The model does not support images. Use a vision model such as `llava` or `qwen2.5vl`. |
 | Holding Alt does nothing | Check that capture is not paused in the tray menu, and that the capture key in Settings is Alt. |
-| The model list says it could not load models | Check the API key and base URL. For Ollama and LM Studio, make sure the app is running and its local server is started. You can still type a model ID by hand. |
+| The model list says it could not load models | Check the API key and base URL. For Ollama and LM Studio, make sure the app is running and its local server is started. Suggested models are shown until the list loads. |

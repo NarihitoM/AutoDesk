@@ -13,7 +13,7 @@ export function parseGeminiModels(payload: unknown): ModelOption[] {
     const methods = asArray(pick(item, 'supportedGenerationMethods'))
     if (!id.startsWith('gemini') || NOT_VISION_CHAT.test(id) || !methods.includes('generateContent')) return []
     const name = asText(pick(item, 'displayName'))
-    return [{ id, label: name ? `${name} (${id})` : id }]
+    return [{ id, label: name ?? id }]
   })
 }
 

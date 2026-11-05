@@ -14,32 +14,40 @@ export async function describeFailure(response: Response): Promise<string> {
   return message ? `${status}: ${message}` : status
 }
 
-async function readJson(response: Response): Promise<unknown> {
+async function send(url: string, init: RequestInit, timeoutMs: number): Promise<unknown> {
+  let response: Response
+  try {
+    response = await fetch(url, { ...init, signal: AbortSignal.timeout(timeoutMs) })
+  } catch (error) {
+    const host = URL.canParse(url) ? new URL(url).host : url
+    if (error instanceof Error && error.name === 'TimeoutError') {
+      throw new Error(`${host} did not respond in time.`)
+    }
+    throw new Error(`Could not connect to ${host}. Check that it is running and the address is correct.`)
+  }
+
   if (!response.ok) throw new Error(await describeFailure(response))
   const data: unknown = await response.json()
   return data
 }
 
-export async function getJson(
+export function getJson(
   url: string,
   headers: Record<string, string> = {},
   timeoutMs = DEFAULT_TIMEOUT_MS
 ): Promise<unknown> {
-  const response = await fetch(url, { headers, signal: AbortSignal.timeout(timeoutMs) })
-  return readJson(response)
+  return send(url, { headers }, timeoutMs)
 }
 
-export async function postJson(
+export function postJson(
   url: string,
   body: unknown,
   headers: Record<string, string> = {},
   timeoutMs = DEFAULT_TIMEOUT_MS
 ): Promise<unknown> {
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...headers },
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(timeoutMs)
-  })
-  return readJson(response)
+  return send(
+    url,
+    { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body) },
+    timeoutMs
+  )
 }

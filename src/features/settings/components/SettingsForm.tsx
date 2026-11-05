@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { bridge } from '@/shared/lib/bridge'
 import {
   MODIFIER_KEYS,
   MODIFIER_LABELS,
@@ -165,6 +166,19 @@ export function SettingsForm({ view, status, onSave }: SettingsFormProps) {
           />
           <span>Start AutoDesk when I sign in to Windows</span>
         </label>
+        <div className={styles.field}>
+          <span className={styles.label}>Data folder</span>
+          <div className={styles.inline}>
+            <code className={styles.path}>{view.dataDirectory}</code>
+            <button type="button" className={styles.secondaryButton} onClick={bridge.settings.openDataFolder}>
+              Open folder
+            </button>
+          </div>
+          <span className={styles.hint}>
+            Settings are saved in settings.json. API keys are saved in credentials.json, encrypted so only your
+            Windows account can read them.
+          </span>
+        </div>
       </section>
 
       <footer className={styles.footer}>

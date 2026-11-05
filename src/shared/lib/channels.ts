@@ -10,5 +10,6 @@ export const Channels = {
   panelClose: 'panel:close',
   settingsGet: 'settings:get',
   settingsSave: 'settings:save',
-  modelsList: 'models:list'
+  modelsList: 'models:list',
+  openDataFolder: 'settings:open-data-folder'
 } as const

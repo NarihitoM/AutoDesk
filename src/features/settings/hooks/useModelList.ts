@@ -32,14 +32,15 @@ export function useModelList({ provider, baseUrl, apiKey, canFetch }: ModelListQ
     let active = true
     setState({ status: 'loading' })
     const timer = setTimeout(() => {
-      bridge.settings.listModels({ provider, baseUrl, apiKey }).then(
-        (result) => {
-          if (active) setState({ status: 'ready', result })
-        },
-        (error: unknown) => {
-          if (active) setState({ status: 'error', message: readIpcError(error) })
-        }
-      )
+      bridge.settings
+        .listModels({ provider, baseUrl, apiKey })
+        .then((response): ModelListState =>
+          response.ok ? { status: 'ready', result: response.result } : { status: 'error', message: response.error }
+        )
+        .catch((error: unknown): ModelListState => ({ status: 'error', message: readIpcError(error) }))
+        .then((next) => {
+          if (active) setState(next)
+        })
     }, DEBOUNCE_MS)
 
     return () => {

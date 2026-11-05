@@ -17,3 +17,5 @@ export interface ModelListResult {
   models: ModelOption[]
   visionFilter: VisionFilter
 }
+
+export type ModelListResponse = { ok: true; result: ModelListResult } | { ok: false; error: string }

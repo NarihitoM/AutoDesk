@@ -49,7 +49,7 @@ describe('Anthropic model list', () => {
       ]
     })
     expect(result.visionFilter).toBe('verified')
-    expect(result.models).toEqual([{ id: 'claude-opus-5-5', label: 'Claude Opus 5.5 (claude-opus-5-5)' }])
+    expect(result.models).toEqual([{ id: 'claude-opus-5-5', label: 'Claude Opus 5.5' }])
   })
 
   it('keeps every model when capabilities are missing', () => {
@@ -71,7 +71,7 @@ describe('Gemini model list', () => {
       ]
     }
     expect(parseGeminiModels(payload)).toEqual([
-      { id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash (gemini-2.5-flash)' }
+      { id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' }
     ])
   })
 })

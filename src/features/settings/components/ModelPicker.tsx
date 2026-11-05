@@ -1,10 +1,10 @@
-import { useId, useState } from 'react'
+import { useId } from 'react'
+import { PROVIDER_LABELS, SUGGESTED_MODELS } from '@/shared/lib/providers'
 import type { ModelOption } from '@/shared/types/models'
 import type { ProviderId } from '@/shared/types/settings'
 import { useModelList, type ModelListState } from '../hooks/useModelList'
+import { ModelDropdown } from './ModelDropdown'
 import styles from './Settings.module.css'
-
-const CUSTOM_OPTION = '__custom__'
 
 interface ModelPickerProps {
   provider: ProviderId
@@ -15,32 +15,32 @@ interface ModelPickerProps {
   onChange(model: string): void
 }
 
-function describe(state: ModelListState, models: ModelOption[]): string {
+function describe(state: ModelListState, provider: ProviderId, liveCount: number): string {
+  const name = PROVIDER_LABELS[provider]
+  const count = `${liveCount} ${liveCount === 1 ? 'model' : 'models'}`
   switch (state.status) {
     case 'needs-key':
-      return 'Add your API key above to load the available models.'
+      return `Showing suggested models. Add your API key to load the full list from ${name}.`
     case 'loading':
-      return 'Loading models...'
+      return `Loading models from ${name}...`
     case 'error':
-      return `Could not load models. ${state.message}`
-    case 'ready': {
-      const count = `${models.length} ${models.length === 1 ? 'model' : 'models'}`
-      if (models.length === 0) return 'No models that accept images were found. Enter a model ID instead.'
-      if (state.result.visionFilter === 'verified') return `${count} that accept images.`
-      if (state.result.visionFilter === 'name-based') return `${count} that accept images, matched by model name.`
-      return `This server does not report image support, so all ${count} are shown. Pick one that can read images.`
-    }
+      return `${state.message} Showing suggested models.`
+    case 'ready':
+      if (liveCount === 0) return 'No models that accept images were found, so suggested models are shown.'
+      if (state.result.visionFilter === 'verified') return `${count} from ${name} that accept images.`
+      if (state.result.visionFilter === 'name-based') return `${count} from ${name} that accept images, matched by name.`
+      return `${name} does not report image support, so all ${count} are shown. Pick one that can read images.`
   }
 }
 
 export function ModelPicker({ provider, baseUrl, apiKey, canFetch, value, onChange }: ModelPickerProps) {
   const id = useId()
-  const [typing, setTyping] = useState(false)
   const { state, reload } = useModelList({ provider, baseUrl, apiKey, canFetch })
 
-  const models = state.status === 'ready' ? state.result.models : []
-  const showList = models.length > 0 && !typing
-  const inList = models.some((model) => model.id === value)
+  const live = state.status === 'ready' ? state.result.models : []
+  const isLive = live.length > 0
+  const base: readonly ModelOption[] = isLive ? live : SUGGESTED_MODELS[provider]
+  const options = base.some((option) => option.id === value) ? base : [{ id: value, label: value }, ...base]
 
   return (
     <div className={styles.field}>
@@ -48,50 +48,36 @@ export function ModelPicker({ provider, baseUrl, apiKey, canFetch, value, onChan
         Model
       </label>
       <div className={styles.inline}>
-        {showList ? (
-          <select
-            id={id}
-            className={styles.input}
-            value={value}
-            onChange={(event) => {
-              if (event.target.value === CUSTOM_OPTION) setTyping(true)
-              else onChange(event.target.value)
-            }}
-          >
-            {!inList && <option value={value}>{value} (not in list)</option>}
-            {models.map((model) => (
-              <option key={model.id} value={model.id}>
-                {model.label}
-              </option>
-            ))}
-            <option value={CUSTOM_OPTION}>Enter a model ID...</option>
-          </select>
-        ) : (
-          <input
-            id={id}
-            className={styles.input}
-            value={value}
-            spellCheck={false}
-            onChange={(event) => onChange(event.target.value)}
-          />
-        )}
-        {typing && models.length > 0 ? (
-          <button type="button" className={styles.secondaryButton} onClick={() => setTyping(false)}>
-            Show list
-          </button>
-        ) : (
-          <button
-            type="button"
-            className={styles.secondaryButton}
-            onClick={reload}
-            disabled={state.status === 'loading' || state.status === 'needs-key'}
-          >
-            Refresh
-          </button>
-        )}
+        <ModelDropdown
+          id={id}
+          value={value}
+          options={options}
+          caption={isLive ? `Live from ${PROVIDER_LABELS[provider]}` : 'Suggested models'}
+          onChange={onChange}
+        />
+        <button
+          type="button"
+          className={styles.iconButton}
+          onClick={reload}
+          disabled={state.status === 'loading' || state.status === 'needs-key'}
+          aria-label="Reload the model list"
+          title="Reload the model list"
+          data-spinning={state.status === 'loading'}
+        >
+          <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">
+            <path
+              d="M13.5 8a5.5 5.5 0 11-1.6-3.9M13.5 2.5v3.2h-3.2"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
       </div>
       <span className={styles.hint} data-tone={state.status === 'error' ? 'error' : undefined}>
-        {describe(state, models)}
+        {describe(state, provider, live.length)}
       </span>
     </div>
   )

@@ -10,7 +10,7 @@ export function parseAnthropicModels(payload: unknown): ModelListResult {
     const id = asText(pick(item, 'id')) ?? ''
     const name = asText(pick(item, 'display_name'))
     const imageInput = pick(item, 'capabilities', 'image_input', 'supported')
-    return { id, label: name ? `${name} (${id})` : id, imageInput }
+    return { id, label: name ?? id, imageInput }
   })
 
   const verified = entries.some((entry) => typeof entry.imageInput === 'boolean')

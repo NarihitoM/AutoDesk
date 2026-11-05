@@ -26,6 +26,7 @@ export interface Settings {
 export interface SettingsView {
   settings: Settings
   storedKeys: Record<ProviderId, boolean>
+  dataDirectory: string
 }
 
 export type KeyChange = { action: 'set'; value: string } | { action: 'clear' }
