@@ -1,5 +1,6 @@
 import {
   BrowserWindow,
+  dialog,
   screen,
   shell,
   type Display,
@@ -22,6 +23,7 @@ let overlayDisplay: Display | null = null
 let panel: BrowserWindow | null = null
 let panelHiddenForCapture = false
 let settings: BrowserWindow | null = null
+let settingsDirty = false
 let quitting = false
 
 function webPreferences(extra: WebPreferences = {}): WebPreferences {
@@ -206,10 +208,40 @@ export function openSettingsWindow(): void {
   settings.on('page-title-updated', (event) => event.preventDefault())
   harden(settings)
   settings.once('ready-to-show', () => settings?.show())
+  settings.on('close', (event) => {
+    if (!settingsDirty || quitting || !settings) return
+    event.preventDefault()
+    confirmSettingsClose(settings)
+  })
   settings.on('closed', () => {
     settings = null
+    settingsDirty = false
   })
   loadRoute(settings, 'settings')
+}
+
+function confirmSettingsClose(window: BrowserWindow): void {
+  const choice = dialog.showMessageBoxSync(window, {
+    type: 'warning',
+    title: 'AutoDesk Settings',
+    message: 'You have unsaved changes.',
+    detail: 'Do you want to save your changes before closing Settings?',
+    buttons: ['Save', "Don't save", 'Cancel'],
+    defaultId: 0,
+    cancelId: 2,
+    noLink: true
+  })
+  if (choice === 0) window.webContents.send(Channels.settingsSaveRequest)
+  if (choice === 1) closeSettingsWindow()
+}
+
+export function setSettingsDirty(dirty: boolean): void {
+  settingsDirty = dirty
+}
+
+export function closeSettingsWindow(): void {
+  settingsDirty = false
+  settings?.close()
 }
 
 export function isSettingsSender(sender: WebContents): boolean {

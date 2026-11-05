@@ -58,6 +58,9 @@ export class ChatSession {
       if (target.keyRequired && !target.apiKey) {
         throw new Error('Add an API key for this provider in Settings (tray icon > Settings).')
       }
+      if (!target.config.model) {
+        throw new Error('Choose a model in Settings (tray icon > Settings).')
+      }
       const turns = this.buildTurns(reply.id)
       const request = { model: target.config.model, baseUrl: target.config.baseUrl, apiKey: target.apiKey, turns }
       for await (const delta of streamChat(target.provider, request, controller.signal)) {

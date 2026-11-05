@@ -9,6 +9,8 @@ interface ModelDropdownProps {
   value: string
   options: readonly ModelOption[]
   caption: string
+  placeholder: string
+  disabled: boolean
   onChange(model: string): void
 }
 
@@ -22,7 +24,7 @@ function findMatch(options: readonly ModelOption[], query: string, from: number)
   return index === -1 ? -1 : (index + from) % options.length
 }
 
-export function ModelDropdown({ id, value, options, caption, onChange }: ModelDropdownProps) {
+export function ModelDropdown({ id, value, options, caption, placeholder, disabled, onChange }: ModelDropdownProps) {
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(0)
   const rootRef = useRef<HTMLDivElement>(null)
@@ -124,11 +126,14 @@ export function ModelDropdown({ id, value, options, caption, onChange }: ModelDr
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={listId}
+        disabled={disabled}
         onClick={() => (open ? setOpen(false) : openList())}
         onKeyDown={onTriggerKeyDown}
       >
         <span className={styles.optionText}>
-          <span className={styles.optionLabel}>{selected?.label ?? value}</span>
+          <span className={styles.optionLabel} data-placeholder={!selected}>
+            {selected?.label ?? placeholder}
+          </span>
           {selected && selected.label !== selected.id && <span className={styles.optionId}>{selected.id}</span>}
         </span>
         <svg className={styles.chevron} viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
@@ -136,7 +141,7 @@ export function ModelDropdown({ id, value, options, caption, onChange }: ModelDr
         </svg>
       </button>
 
-      {open && (
+      {open && !disabled && (
         <div className={styles.dropdownPanel}>
           <div className={styles.dropdownCaption}>{caption}</div>
           <ul

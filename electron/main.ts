@@ -21,8 +21,8 @@ import {
 const ARM_DELAY_MS = 150
 
 function needsSetup(): boolean {
-  const { activeProvider } = getSettings()
-  return KEY_REQUIRED[activeProvider] && !getApiKey(activeProvider)
+  const { activeProvider, providers } = getSettings()
+  return (KEY_REQUIRED[activeProvider] && !getApiKey(activeProvider)) || !providers[activeProvider].model
 }
 
 async function bootstrap(): Promise<void> {

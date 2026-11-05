@@ -12,5 +12,8 @@ export const Channels = {
   settingsGet: 'settings:get',
   settingsSave: 'settings:save',
   modelsList: 'models:list',
-  openDataFolder: 'settings:open-data-folder'
+  openDataFolder: 'settings:open-data-folder',
+  settingsDirty: 'settings:dirty',
+  settingsSaveRequest: 'settings:save-request',
+  settingsClose: 'settings:close'
 } as const

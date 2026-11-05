@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { bridge } from '@/shared/lib/bridge'
 import {
   CAPTURE_KEY_LABELS,
@@ -24,7 +24,7 @@ import styles from './Settings.module.css'
 interface SettingsFormProps {
   view: SettingsView
   status: SaveStatus
-  onSave(update: SettingsUpdate): Promise<boolean>
+  onSave(update: SettingsUpdate): Promise<SettingsView | null>
 }
 
 type KeyDrafts = Partial<Record<ProviderId, string>>
@@ -37,6 +37,10 @@ function buildKeyChanges(drafts: KeyDrafts, cleared: ReadonlySet<ProviderId>): P
     else if (cleared.has(id)) changes[id] = { action: 'clear' }
   }
   return changes
+}
+
+function sameSettings(a: Settings, b: Settings): boolean {
+  return JSON.stringify(a) === JSON.stringify(b)
 }
 
 function captureHint(key: CaptureKey): string {
@@ -59,6 +63,8 @@ export function SettingsForm({ view, status, onSave }: SettingsFormProps) {
   const [clearedKeys, setClearedKeys] = useState<ReadonlySet<ProviderId>>(new Set())
 
   const active = draft.activeProvider
+  const keyChanges = buildKeyChanges(keyDrafts, clearedKeys)
+  const hasChanges = !sameSettings(draft, view.settings) || Object.keys(keyChanges).length > 0
 
   const update = <K extends keyof Settings>(key: K, value: Settings[K]): void => {
     setDraft((current) => ({ ...current, [key]: value }))
@@ -82,17 +88,42 @@ export function SettingsForm({ view, status, onSave }: SettingsFormProps) {
     setClearedKeys((current) => new Set(current).add(active))
   }
 
-  const onSubmit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
+  const saveChanges = async (): Promise<boolean> => {
+    if (!hasChanges) return true
+    const saved = await onSave({ settings: draft, keys: keyChanges })
+    if (!saved) return false
+    setDraft(saved.settings)
+    setKeyDrafts({})
+    setClearedKeys(new Set())
+    return true
+  }
+
+  const saveRef = useRef(saveChanges)
+  useEffect(() => {
+    saveRef.current = saveChanges
+  })
+
+  useEffect(() => {
+    bridge.settings.setDirty(hasChanges)
+  }, [hasChanges])
+
+  useEffect(
+    () =>
+      bridge.settings.onSaveRequest(() => {
+        void saveRef.current().then((saved) => {
+          if (saved) bridge.settings.close()
+        })
+      }),
+    []
+  )
+
+  const onSubmit = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault()
-    const saved = await onSave({ settings: draft, keys: buildKeyChanges(keyDrafts, clearedKeys) })
-    if (saved) {
-      setKeyDrafts({})
-      setClearedKeys(new Set())
-    }
+    void saveChanges()
   }
 
   return (
-    <form className={styles.form} onSubmit={(event) => void onSubmit(event)}>
+    <form className={styles.form} onSubmit={onSubmit}>
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>AI provider</h2>
         <div className={styles.segmented} role="radiogroup" aria-label="AI provider">
@@ -189,7 +220,7 @@ export function SettingsForm({ view, status, onSave }: SettingsFormProps) {
         <span className={styles.status} data-kind={status.kind} role="status">
           {statusText(status)}
         </span>
-        <button type="submit" className={styles.primaryButton} disabled={status.kind === 'saving'}>
+        <button type="submit" className={styles.primaryButton} disabled={!hasChanges || status.kind === 'saving'}>
           Save
         </button>
       </footer>

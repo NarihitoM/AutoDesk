@@ -15,7 +15,7 @@ function nonEmptyText(value: unknown, fallback: string): string {
 
 function sanitizeProvider(raw: unknown, fallback: ProviderConfig): ProviderConfig {
   return {
-    model: nonEmptyText(pick(raw, 'model'), fallback.model),
+    model: asText(pick(raw, 'model'))?.trim() ?? fallback.model,
     baseUrl: nonEmptyText(pick(raw, 'baseUrl'), fallback.baseUrl).replace(/\/+$/, '')
   }
 }

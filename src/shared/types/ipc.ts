@@ -53,5 +53,8 @@ export interface AutoDeskApi {
     save(update: SettingsUpdate): Promise<SettingsView>
     listModels(request: ModelListRequest): Promise<ModelListResponse>
     openDataFolder(): void
+    setDirty(dirty: boolean): void
+    onSaveRequest(listener: () => void): Unsubscribe
+    close(): void
   }
 }

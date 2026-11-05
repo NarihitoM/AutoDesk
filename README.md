@@ -103,26 +103,28 @@ Hold the **right mouse button**, drag over part of your screen, and let go. The 
 | --- | --- |
 | AI provider | Which service answers your captures |
 | API key | Your key for that provider. Optional for local servers. |
-| Model | A dropdown of the provider's live model list, showing only models that accept images. Before a key is added, it shows suggested models. |
+| Model | A dropdown of the provider's live model list, showing only models that accept images. It stays empty until the provider is connected. |
 | Base URL | Change only for a proxy or a self-hosted server |
 | Capture key | Right mouse button (default), or hold <kbd>Alt</kbd>, <kbd>Ctrl</kbd>, or <kbd>Shift</kbd> and left-drag |
 | Prompt | The instruction sent with every capture |
 | Start with Windows | Launch AutoDesk when you sign in |
 
 <details>
-<summary><b>Default models and endpoints</b></summary>
+<summary><b>Default endpoints</b></summary>
 <br />
 
-| Provider | Model | Base URL |
-| --- | --- | --- |
-| OpenAI | `gpt-5` | `https://api.openai.com/v1` |
-| Anthropic | `claude-opus-5-5` | `https://api.anthropic.com` |
-| Gemini | `gemini-2.5-flash` | `https://generativelanguage.googleapis.com` |
-| Groq | `meta-llama/llama-4-scout-17b-16e-instruct` | `https://api.groq.com/openai/v1` |
-| OpenRouter | `google/gemini-2.5-flash` | `https://openrouter.ai/api/v1` |
-| Ollama | `llava` | `http://localhost:11434/v1` |
-| LM Studio | `qwen2.5-vl-7b-instruct` | `http://localhost:1234/v1` |
-| Custom | `llava` | `http://localhost:8000/v1` |
+| Provider | Base URL |
+| --- | --- |
+| OpenAI | `https://api.openai.com/v1` |
+| Anthropic | `https://api.anthropic.com` |
+| Gemini | `https://generativelanguage.googleapis.com` |
+| Groq | `https://api.groq.com/openai/v1` |
+| OpenRouter | `https://openrouter.ai/api/v1` |
+| Ollama | `http://localhost:11434/v1` |
+| LM Studio | `http://localhost:1234/v1` |
+| Custom | `http://localhost:8000/v1` |
+
+No model is preselected. Pick one from the live list after connecting.
 
 </details>
 
@@ -242,4 +244,4 @@ The Release workflow sets the app version from the tag, runs the checks, builds 
 | A local model ignores the image | The model does not support images. Use a vision model such as `llava` or `qwen2.5vl`. |
 | Right-drag does nothing | Check that capture is not paused in the tray menu, and that the capture key in Settings is Right mouse button. |
 | A game or app needs right-drag | Choose **Pause capture** in the tray menu while you use it, or switch the capture key to Alt, Ctrl, or Shift. |
-| The model list says it could not load models | Check the API key and base URL. For Ollama and LM Studio, make sure the app is running and its local server is started. Suggested models are shown until the list loads. |
+| The model list says it could not load models | Check the API key and base URL. For Ollama and LM Studio, make sure the app is running and its local server is started. The model dropdown stays empty until the list loads. |

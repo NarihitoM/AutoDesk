@@ -32,7 +32,10 @@ const api: AutoDeskApi = {
     save: (update: SettingsUpdate): Promise<SettingsView> => ipcRenderer.invoke(Channels.settingsSave, update),
     listModels: (request: ModelListRequest): Promise<ModelListResponse> =>
       ipcRenderer.invoke(Channels.modelsList, request),
-    openDataFolder: () => ipcRenderer.send(Channels.openDataFolder)
+    openDataFolder: () => ipcRenderer.send(Channels.openDataFolder),
+    setDirty: (dirty: boolean) => ipcRenderer.send(Channels.settingsDirty, dirty),
+    onSaveRequest: (listener) => listen<void>(Channels.settingsSaveRequest, listener),
+    close: () => ipcRenderer.send(Channels.settingsClose)
   }
 }
 

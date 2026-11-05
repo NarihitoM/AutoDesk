@@ -26,15 +26,16 @@ export function useSettings() {
     return () => clearTimeout(timer)
   }, [status])
 
-  const save = useCallback(async (update: SettingsUpdate): Promise<boolean> => {
+  const save = useCallback(async (update: SettingsUpdate): Promise<SettingsView | null> => {
     setStatus({ kind: 'saving' })
     try {
-      setView(await bridge.settings.save(update))
+      const saved = await bridge.settings.save(update)
+      setView(saved)
       setStatus({ kind: 'saved' })
-      return true
+      return saved
     } catch (error) {
       setStatus({ kind: 'error', message: readIpcError(error) })
-      return false
+      return null
     }
   }, [])
 

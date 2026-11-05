@@ -1,6 +1,5 @@
 import { useId } from 'react'
-import { PROVIDER_LABELS, SUGGESTED_MODELS } from '@/shared/lib/providers'
-import type { ModelOption } from '@/shared/types/models'
+import { PROVIDER_LABELS } from '@/shared/lib/providers'
 import type { ProviderId } from '@/shared/types/settings'
 import { useModelList, type ModelListState } from '../hooks/useModelList'
 import { ModelDropdown } from './ModelDropdown'
@@ -20,17 +19,24 @@ function describe(state: ModelListState, provider: ProviderId, liveCount: number
   const count = `${liveCount} ${liveCount === 1 ? 'model' : 'models'}`
   switch (state.status) {
     case 'needs-key':
-      return `Showing suggested models. Add your API key to load the full list from ${name}.`
+      return `Add your API key to load models from ${name}.`
     case 'loading':
       return `Loading models from ${name}...`
     case 'error':
-      return `${state.message} Showing suggested models.`
+      return state.message
     case 'ready':
-      if (liveCount === 0) return 'No models that accept images were found, so suggested models are shown.'
+      if (liveCount === 0) return `${name} has no models that accept images.`
       if (state.result.visionFilter === 'verified') return `${count} from ${name} that accept images.`
       if (state.result.visionFilter === 'name-based') return `${count} from ${name} that accept images, matched by name.`
       return `${name} does not report image support, so all ${count} are shown. Pick one that can read images.`
   }
+}
+
+function placeholderFor(state: ModelListState, isLive: boolean): string {
+  if (isLive) return 'Choose a model'
+  if (state.status === 'loading') return 'Loading models...'
+  if (state.status === 'needs-key') return 'Connect to load models'
+  return 'No models available'
 }
 
 export function ModelPicker({ provider, baseUrl, apiKey, canFetch, value, onChange }: ModelPickerProps) {
@@ -39,8 +45,8 @@ export function ModelPicker({ provider, baseUrl, apiKey, canFetch, value, onChan
 
   const live = state.status === 'ready' ? state.result.models : []
   const isLive = live.length > 0
-  const base: readonly ModelOption[] = isLive ? live : SUGGESTED_MODELS[provider]
-  const options = base.some((option) => option.id === value) ? base : [{ id: value, label: value }, ...base]
+  const keepsSaved = isLive && value !== '' && !live.some((option) => option.id === value)
+  const options = keepsSaved ? [{ id: value, label: value }, ...live] : live
 
   return (
     <div className={styles.field}>
@@ -52,7 +58,9 @@ export function ModelPicker({ provider, baseUrl, apiKey, canFetch, value, onChan
           id={id}
           value={value}
           options={options}
-          caption={isLive ? `Live from ${PROVIDER_LABELS[provider]}` : 'Suggested models'}
+          caption={`Live from ${PROVIDER_LABELS[provider]}`}
+          placeholder={placeholderFor(state, isLive)}
+          disabled={!isLive}
           onChange={onChange}
         />
         <button
