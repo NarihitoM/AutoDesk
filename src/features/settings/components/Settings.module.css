@@ -13,6 +13,7 @@
   width: min(100%, 360px);
   height: auto;
   margin: 0 auto 20px;
+  border-radius: var(--radius);
 }
 
 .pageTitle {
@@ -132,6 +133,38 @@
   .segmented {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+.themeSwitch {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-sunken);
+}
+
+.themeOption {
+  height: 32px;
+  border: none;
+  border-radius: var(--radius-small);
+  background: transparent;
+  color: var(--text-muted);
+  font-weight: 600;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+.themeOption:hover {
+  color: var(--text);
+}
+
+.themeOption[data-active='true'] {
+  background: var(--surface-raised);
+  color: var(--text);
+  box-shadow: 0 0 0 1px var(--border-strong);
 }
 
 .providerForm {
@@ -273,7 +306,7 @@
   border: 1px solid var(--border-strong);
   border-radius: var(--radius);
   background: var(--surface-raised);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--shadow);
 }
 
 .dropdownCaption {
@@ -430,7 +463,7 @@
 .primaryButton {
   border: none;
   background: var(--accent-strong);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .primaryButton:disabled {

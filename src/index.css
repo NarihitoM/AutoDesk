@@ -14,11 +14,37 @@
   --danger: #ff8080;
   --danger-soft: rgba(255, 128, 128, 0.12);
   --success: #7ddca4;
+  --on-accent: #ffffff;
+  --chip: rgba(20, 21, 27, 0.92);
+  --shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
   --radius: 10px;
   --radius-small: 7px;
   --font: 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
   --font-mono: 'Cascadia Code', Consolas, monospace;
   color-scheme: dark;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --surface: #f6f7fa;
+    --surface-raised: #ffffff;
+    --surface-sunken: #eef0f4;
+    --surface-hover: #e5e8ee;
+    --border: #dde0e7;
+    --border-strong: #c6cad4;
+    --text: #1b1d24;
+    --text-muted: #555a6a;
+    --text-faint: #858a98;
+    --accent: #2f6be0;
+    --accent-strong: #2f6be0;
+    --accent-soft: rgba(47, 107, 224, 0.1);
+    --danger: #d23c3c;
+    --danger-soft: rgba(210, 60, 60, 0.1);
+    --success: #1f9a58;
+    --chip: rgba(255, 255, 255, 0.95);
+    --shadow: 0 16px 40px rgba(20, 24, 36, 0.16);
+    color-scheme: light;
+  }
 }
 
 *,

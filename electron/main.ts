@@ -12,10 +12,12 @@ import {
   createOverlayWindow,
   createPanelWindow,
   hideOverlay,
+  applyTheme,
   markQuitting,
   openSettingsWindow,
   restorePanel,
-  showOverlay
+  showOverlay,
+  watchTheme
 } from './tools/windows'
 
 const ARM_DELAY_MS = 150
@@ -28,6 +30,8 @@ function needsSetup(): boolean {
 async function bootstrap(): Promise<void> {
   app.setAppUserModelId('com.autodesk.snip')
   await loadSettings()
+  applyTheme(getSettings().theme)
+  watchTheme()
   createOverlayWindow()
   createPanelWindow()
 
@@ -59,7 +63,8 @@ async function bootstrap(): Promise<void> {
     onSettings: openSettingsWindow,
     onQuit: () => app.quit()
   })
-  onSettingsChanged(() => {
+  onSettingsChanged((settings) => {
+    applyTheme(settings.theme)
     tray.refresh()
     syncMouseHook()
   })

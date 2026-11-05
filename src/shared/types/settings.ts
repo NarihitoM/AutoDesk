@@ -12,6 +12,8 @@ export type ModifierKey = 'alt' | 'ctrl' | 'shift'
 
 export type CaptureKey = 'right-mouse' | ModifierKey
 
+export type ThemeMode = 'system' | 'light' | 'dark'
+
 export interface ProviderConfig {
   model: string
   baseUrl: string
@@ -23,6 +25,7 @@ export interface Settings {
   prompt: string
   captureKey: CaptureKey
   launchAtStartup: boolean
+  theme: ThemeMode
 }
 
 export interface SettingsView {

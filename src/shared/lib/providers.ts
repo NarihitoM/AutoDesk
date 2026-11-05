@@ -1,4 +1,4 @@
-import type { CaptureKey, ModifierKey, ProviderId } from '@/shared/types/settings'
+import type { CaptureKey, ModifierKey, ProviderId, ThemeMode } from '@/shared/types/settings'
 
 export const PROVIDER_IDS: readonly ProviderId[] = [
   'openai',
@@ -81,6 +81,14 @@ export const CAPTURE_GESTURES: Record<CaptureKey, string> = {
   alt: 'Hold Alt + drag',
   ctrl: 'Hold Ctrl + drag',
   shift: 'Hold Shift + drag'
+}
+
+export const THEME_MODES: readonly ThemeMode[] = ['system', 'light', 'dark']
+
+export const THEME_LABELS: Record<ThemeMode, string> = {
+  system: 'Match Windows',
+  light: 'Light',
+  dark: 'Dark'
 }
 
 export function modifierOf(key: CaptureKey): ModifierKey | null {

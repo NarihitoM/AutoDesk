@@ -1,6 +1,7 @@
 import {
   BrowserWindow,
   dialog,
+  nativeTheme,
   screen,
   shell,
   type Display,
@@ -10,13 +11,14 @@ import {
 } from 'electron'
 import { Channels } from '@/shared/lib/channels'
 import type { PanelEvent, SelectionRect } from '@/shared/types/ipc'
+import type { ThemeMode } from '@/shared/types/settings'
 import { APP_ICON_PATH, PRELOAD_PATH, RENDERER_HTML_PATH } from '../lib/paths'
 import { placePanel } from './geometry'
 
 type Route = 'overlay' | 'panel' | 'settings'
 
 const PANEL_SIZE = { width: 440, height: 560 }
-const SURFACE_COLOR = '#14151b'
+const SURFACE_COLORS = { dark: '#14151b', light: '#f6f7fa' }
 
 let overlay: BrowserWindow | null = null
 let overlayDisplay: Display | null = null
@@ -59,6 +61,22 @@ function keepAliveOnClose(window: BrowserWindow): void {
     if (quitting) return
     event.preventDefault()
     window.hide()
+  })
+}
+
+function surfaceColor(): string {
+  return nativeTheme.shouldUseDarkColors ? SURFACE_COLORS.dark : SURFACE_COLORS.light
+}
+
+export function applyTheme(mode: ThemeMode): void {
+  nativeTheme.themeSource = mode
+}
+
+export function watchTheme(): void {
+  nativeTheme.on('updated', () => {
+    const color = surfaceColor()
+    panel?.setBackgroundColor(color)
+    settings?.setBackgroundColor(color)
   })
 }
 
@@ -134,7 +152,7 @@ export function createPanelWindow(): void {
     alwaysOnTop: true,
     title: 'AutoDesk',
     icon: APP_ICON_PATH,
-    backgroundColor: SURFACE_COLOR,
+    backgroundColor: surfaceColor(),
     webPreferences: webPreferences()
   })
   panel.setAlwaysOnTop(true, 'floating')
@@ -201,7 +219,7 @@ export function openSettingsWindow(): void {
     title: 'AutoDesk Settings',
     icon: APP_ICON_PATH,
     autoHideMenuBar: true,
-    backgroundColor: SURFACE_COLOR,
+    backgroundColor: surfaceColor(),
     webPreferences: webPreferences()
   })
   settings.removeMenu()

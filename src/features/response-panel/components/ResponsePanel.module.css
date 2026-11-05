@@ -261,7 +261,7 @@
 .primaryButton {
   border: none;
   background: var(--accent-strong);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .primaryButton:disabled {

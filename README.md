@@ -107,6 +107,7 @@ Hold the **right mouse button**, drag over part of your screen, and let go. The 
 | Base URL | Change only for a proxy or a self-hosted server |
 | Capture key | Right mouse button (default), or hold <kbd>Alt</kbd>, <kbd>Ctrl</kbd>, or <kbd>Shift</kbd> and left-drag |
 | Prompt | The instruction sent with every capture |
+| Appearance | Match Windows, Light, or Dark |
 | Start with Windows | Launch AutoDesk when you sign in |
 
 <details>

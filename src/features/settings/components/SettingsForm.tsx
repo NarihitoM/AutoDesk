@@ -5,7 +5,9 @@ import {
   CAPTURE_KEYS,
   PROVIDER_IDS,
   PROVIDER_LABELS,
-  PROVIDER_SHORT_LABELS
+  PROVIDER_SHORT_LABELS,
+  THEME_LABELS,
+  THEME_MODES
 } from '@/shared/lib/providers'
 import type {
   CaptureKey,
@@ -193,6 +195,24 @@ export function SettingsForm({ view, status, onSave }: SettingsFormProps) {
 
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>General</h2>
+        <div className={styles.field}>
+          <span className={styles.label}>Appearance</span>
+          <div className={styles.themeSwitch} role="radiogroup" aria-label="Appearance">
+            {THEME_MODES.map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                role="radio"
+                aria-checked={draft.theme === mode}
+                className={styles.themeOption}
+                data-active={draft.theme === mode}
+                onClick={() => update('theme', mode)}
+              >
+                {THEME_LABELS[mode]}
+              </button>
+            ))}
+          </div>
+        </div>
         <label className={styles.checkbox}>
           <input
             type="checkbox"

@@ -18,6 +18,7 @@ export function defaultSettings(): Settings {
     },
     prompt: DEFAULT_PROMPT,
     captureKey: 'right-mouse',
-    launchAtStartup: false
+    launchAtStartup: false,
+    theme: 'system'
   }
 }
