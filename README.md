@@ -104,7 +104,7 @@ Hold the **right mouse button**, drag over part of your screen, and let go. The 
 | AI provider | Which service answers your captures |
 | API key | Your key for that provider. Optional for local servers. |
 | Model | A dropdown of every model the provider offers, tagged **Images** or **Text only**. It stays empty until the provider is connected. |
-| Image reader | Shown when the chosen model cannot read images. This model describes the screenshot, and your chosen model answers from that description. **Automatic** picks the first model tagged Images. |
+| Image reader | Shown when the chosen model cannot read images. This model describes the screenshot, and your chosen model answers from that description. **Automatic** picks the first model tagged Images and is used only when needed. Pick a specific model to always use it for models not tagged Images. |
 | Base URL | Change only for a proxy or a self-hosted server |
 | Capture key | Right mouse button (default), or hold <kbd>Alt</kbd>, <kbd>Ctrl</kbd>, or <kbd>Shift</kbd> and left-drag |
 | Prompt | The instruction sent with every capture |

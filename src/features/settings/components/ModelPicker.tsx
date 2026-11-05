@@ -53,7 +53,7 @@ function readerHint(selected: ModelOption | undefined, readers: readonly ModelOp
   const reason =
     selected?.images === 'no'
       ? `${selected.label} cannot read images, so this model describes each screenshot for it first.`
-      : 'If the chosen model rejects the screenshot, this model describes it first.'
+      : `With Automatic, ${selected?.label ?? 'the chosen model'} gets the screenshot directly and this model steps in only if it is rejected. Pick a model to always use it.`
   return `${reason} Automatic picks ${readers[0]?.label ?? 'the first model that can read images'}.`
 }
 

@@ -14,7 +14,9 @@ async function resolveRoute(provider: ProviderId, config: ProviderConfig, apiKey
   const { selected, vision } = await findModel(provider, config.baseUrl, apiKey, config.model)
   if (selected?.images === 'yes') return { kind: 'direct', fallback: null }
 
-  const reader = config.imageModel || vision.find((model) => model.id !== config.model)?.id || null
+  if (config.imageModel) return { kind: 'reader', model: config.imageModel }
+
+  const reader = vision.find((model) => model.id !== config.model)?.id ?? null
   if (selected?.images === 'no') return reader ? { kind: 'reader', model: reader } : { kind: 'unavailable' }
   return { kind: 'direct', fallback: reader }
 }
