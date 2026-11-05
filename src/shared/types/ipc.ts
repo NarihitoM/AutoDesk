@@ -36,6 +36,7 @@ export type Unsubscribe = () => void
 export interface AutoDeskApi {
   overlay: {
     onReset(listener: () => void): Unsubscribe
+    onSelection(listener: (rect: SelectionRect) => void): Unsubscribe
     begin(): void
     select(rect: SelectionRect): void
     cancel(): void

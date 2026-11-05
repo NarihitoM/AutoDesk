@@ -1,4 +1,5 @@
-import { dialog, ipcMain } from 'electron'
+import { dialog, ipcMain, screen } from 'electron'
+import { rectFromPoints, type Point } from '@/shared/lib/geometry'
 import { Channels } from '@/shared/lib/channels'
 import type { SelectionRect } from '@/shared/types/ipc'
 import { startSession } from '../Agent/assistant'
@@ -6,6 +7,7 @@ import { pick } from '../lib/json'
 import { getSettings } from '../settings/settingsStore'
 import type { CaptureTrigger } from '../tools/captureTrigger'
 import { suppressAltMenu } from '../tools/inputHook'
+import type { RightDragEvent, ScreenPoint } from '../tools/rightDrag'
 import { captureRegion } from '../tools/screenCapture'
 import {
   getOverlayDisplay,
@@ -13,10 +15,15 @@ import {
   hidePanelForCapture,
   isOverlaySender,
   restorePanel,
+  sendOverlaySelection,
+  showOverlay,
   showPanelNear
 } from '../tools/windows'
 
 const MIN_SELECTION = 4
+const MIN_MOUSE_SELECTION = 8
+
+let dragOrigin: Point | null = null
 
 function finite(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null
@@ -59,10 +66,50 @@ async function completeCapture(trigger: CaptureTrigger, rect: SelectionRect | nu
   }
 }
 
+function localPoint(point: ScreenPoint): Point | null {
+  const display = getOverlayDisplay()
+  if (!display) return null
+  const dip = screen.screenToDipPoint(point)
+  const { x, y, width, height } = display.bounds
+  return {
+    x: Math.min(Math.max(dip.x - x, 0), width),
+    y: Math.min(Math.max(dip.y - y, 0), height)
+  }
+}
+
+function selectionTo(point: ScreenPoint): SelectionRect | null {
+  const end = localPoint(point)
+  return dragOrigin && end ? rectFromPoints(dragOrigin, end) : null
+}
+
+export function handleRightDrag(trigger: CaptureTrigger, event: RightDragEvent): void {
+  if (event.type === 'start') {
+    if (!trigger.beginMouseDrag()) return
+    showOverlay(screen.screenToDipPoint(event.origin))
+    hidePanelForCapture()
+    dragOrigin = localPoint(event.origin)
+  }
+
+  if (trigger.current !== 'dragging' || !dragOrigin) return
+
+  if (event.type === 'start' || event.type === 'move') {
+    const rect = selectionTo(event.point)
+    if (rect) sendOverlaySelection(rect)
+    return
+  }
+
+  if (event.type === 'end') {
+    const rect = selectionTo(event.point)
+    dragOrigin = null
+    const large = rect !== null && rect.width >= MIN_MOUSE_SELECTION && rect.height >= MIN_MOUSE_SELECTION
+    void completeCapture(trigger, large ? rect : null)
+  }
+}
+
 export function registerCaptureIpc(trigger: CaptureTrigger): void {
   ipcMain.on(Channels.overlayBegin, (event) => {
     if (!isOverlaySender(event.sender) || !trigger.beginDrag()) return
-    if (getSettings().modifier === 'alt') suppressAltMenu()
+    if (getSettings().captureKey === 'alt') suppressAltMenu()
     hidePanelForCapture()
   })
 

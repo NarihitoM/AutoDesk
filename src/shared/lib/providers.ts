@@ -1,5 +1,5 @@
 import type { ModelOption } from '@/shared/types/models'
-import type { ModifierKey, ProviderId } from '@/shared/types/settings'
+import type { CaptureKey, ModifierKey, ProviderId } from '@/shared/types/settings'
 
 export const PROVIDER_IDS: readonly ProviderId[] = [
   'openai',
@@ -118,10 +118,22 @@ export const SUGGESTED_MODELS: Record<ProviderId, readonly ModelOption[]> = {
   compatible: [option('llava')]
 }
 
-export const MODIFIER_KEYS: readonly ModifierKey[] = ['alt', 'ctrl', 'shift']
+export const CAPTURE_KEYS: readonly CaptureKey[] = ['right-mouse', 'alt', 'ctrl', 'shift']
 
-export const MODIFIER_LABELS: Record<ModifierKey, string> = {
+export const CAPTURE_KEY_LABELS: Record<CaptureKey, string> = {
+  'right-mouse': 'Right mouse button',
   alt: 'Alt',
   ctrl: 'Ctrl',
   shift: 'Shift'
+}
+
+export const CAPTURE_GESTURES: Record<CaptureKey, string> = {
+  'right-mouse': 'Right-click and drag',
+  alt: 'Hold Alt + drag',
+  ctrl: 'Hold Ctrl + drag',
+  shift: 'Hold Shift + drag'
+}
+
+export function modifierOf(key: CaptureKey): ModifierKey | null {
+  return key === 'right-mouse' ? null : key
 }

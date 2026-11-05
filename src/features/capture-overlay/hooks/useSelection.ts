@@ -17,13 +17,16 @@ function pointOf(event: PointerEvent<HTMLElement>): Point {
 export function useSelection({ onBegin, onComplete, onCancel }: SelectionCallbacks) {
   const [start, setStart] = useState<Point | null>(null)
   const [end, setEnd] = useState<Point | null>(null)
+  const [remote, setRemote] = useState<SelectionRect | null>(null)
 
   const reset = useCallback(() => {
     setStart(null)
     setEnd(null)
+    setRemote(null)
   }, [])
 
   const onPointerDown = (event: PointerEvent<HTMLElement>): void => {
+    if (remote) return
     if (event.button === 2) {
       reset()
       onCancel()
@@ -42,7 +45,7 @@ export function useSelection({ onBegin, onComplete, onCancel }: SelectionCallbac
   }
 
   const onPointerUp = (event: PointerEvent<HTMLElement>): void => {
-    if (!start || event.button !== 0) return
+    if (remote || !start || event.button !== 0) return
     const rect = rectFromPoints(start, pointOf(event))
     reset()
     if (rect.width < MIN_SIZE || rect.height < MIN_SIZE) {
@@ -53,8 +56,9 @@ export function useSelection({ onBegin, onComplete, onCancel }: SelectionCallbac
   }
 
   return {
-    rect: start && end ? rectFromPoints(start, end) : null,
+    rect: remote ?? (start && end ? rectFromPoints(start, end) : null),
     reset,
+    showRemote: setRemote,
     handlers: { onPointerDown, onPointerMove, onPointerUp }
   }
 }

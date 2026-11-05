@@ -1,10 +1,10 @@
 import { Menu, Tray, nativeImage } from 'electron'
-import { MODIFIER_LABELS } from '@/shared/lib/providers'
-import type { ModifierKey } from '@/shared/types/settings'
+import { CAPTURE_GESTURES } from '@/shared/lib/providers'
+import type { CaptureKey } from '@/shared/types/settings'
 import { APP_ICON_PATH } from '../lib/paths'
 
 export interface TrayOptions {
-  getModifier(): ModifierKey
+  getCaptureKey(): CaptureKey
   isPaused(): boolean
   setPaused(paused: boolean): void
   onSettings(): void
@@ -20,11 +20,11 @@ export function createTray(options: TrayOptions): TrayHandle {
   const tray = new Tray(icon)
 
   const refresh = (): void => {
-    const modifier = MODIFIER_LABELS[options.getModifier()]
-    tray.setToolTip(`AutoDesk - hold ${modifier} and drag to ask AI`)
+    const gesture = CAPTURE_GESTURES[options.getCaptureKey()]
+    tray.setToolTip(`AutoDesk - ${gesture.toLowerCase()} to ask AI`)
     tray.setContextMenu(
       Menu.buildFromTemplate([
-        { label: `Hold ${modifier} + drag to capture`, enabled: false },
+        { label: `${gesture} to capture`, enabled: false },
         { type: 'separator' },
         {
           label: 'Pause capture',

@@ -20,7 +20,7 @@ export type TriggerState = 'idle' | 'pending' | 'armed' | 'dragging' | 'blocked'
 
 export interface TriggerOptions {
   armDelay: number
-  getModifier(): ModifierKey
+  getModifier(): ModifierKey | null
   isEnabled(): boolean
   onArm(): void
   onCancel(): void
@@ -77,6 +77,12 @@ export class CaptureTrigger {
     return true
   }
 
+  beginMouseDrag(): boolean {
+    if (this.state !== 'idle' || !this.options.isEnabled()) return false
+    this.state = 'dragging'
+    return true
+  }
+
   reset(): void {
     if (this.timer) {
       clearTimeout(this.timer)
@@ -93,6 +99,7 @@ export class CaptureTrigger {
   }
 
   private isModifier(keycode: number): boolean {
-    return MODIFIER_CODES[this.options.getModifier()].includes(keycode)
+    const modifier = this.options.getModifier()
+    return modifier !== null && MODIFIER_CODES[modifier].includes(keycode)
   }
 }

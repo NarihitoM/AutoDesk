@@ -10,6 +10,8 @@ export type ProviderId =
 
 export type ModifierKey = 'alt' | 'ctrl' | 'shift'
 
+export type CaptureKey = 'right-mouse' | ModifierKey
+
 export interface ProviderConfig {
   model: string
   baseUrl: string
@@ -19,7 +21,7 @@ export interface Settings {
   activeProvider: ProviderId
   providers: Record<ProviderId, ProviderConfig>
   prompt: string
-  modifier: ModifierKey
+  captureKey: CaptureKey
   launchAtStartup: boolean
 }
 

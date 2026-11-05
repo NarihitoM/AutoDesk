@@ -6,13 +6,14 @@ import styles from './CaptureOverlay.module.css'
 const LABEL_SPACE = 30
 
 export function CaptureOverlay() {
-  const { rect, reset, handlers } = useSelection({
+  const { rect, reset, showRemote, handlers } = useSelection({
     onBegin: bridge.overlay.begin,
     onComplete: bridge.overlay.select,
     onCancel: bridge.overlay.cancel
   })
 
   useEffect(() => bridge.overlay.onReset(reset), [reset])
+  useEffect(() => bridge.overlay.onSelection(showRemote), [showRemote])
 
   return (
     <div

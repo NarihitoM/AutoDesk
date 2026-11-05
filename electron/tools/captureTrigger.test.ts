@@ -1,14 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ModifierKey } from '@/shared/types/settings'
 import { CaptureTrigger, KeyCode } from './captureTrigger'
 
 const KEY_TAB = 15
 
-function setup(enabled = true) {
+function setup(enabled = true, modifier: ModifierKey | null = 'alt') {
   const onArm = vi.fn()
   const onCancel = vi.fn()
   const trigger = new CaptureTrigger({
     armDelay: 150,
-    getModifier: () => 'alt',
+    getModifier: () => modifier,
     isEnabled: () => enabled,
     onArm,
     onCancel
@@ -109,5 +110,29 @@ describe('CaptureTrigger', () => {
     trigger.keyDown(KeyCode.Alt)
     vi.advanceTimersByTime(500)
     expect(onArm).not.toHaveBeenCalled()
+  })
+
+  it('starts a mouse drag only when idle and enabled', () => {
+    const { trigger } = setup(true, null)
+    expect(trigger.beginMouseDrag()).toBe(true)
+    expect(trigger.current).toBe('dragging')
+    expect(trigger.beginMouseDrag()).toBe(false)
+    expect(setup(false, null).trigger.beginMouseDrag()).toBe(false)
+  })
+
+  it('cancels a mouse drag on Escape', () => {
+    const { trigger, onCancel } = setup(true, null)
+    trigger.beginMouseDrag()
+    trigger.keyDown(KeyCode.Escape)
+    expect(onCancel).toHaveBeenCalledOnce()
+    expect(trigger.current).toBe('idle')
+  })
+
+  it('ignores keyboard arming when the capture key is the mouse', () => {
+    const { trigger, onArm } = setup(true, null)
+    trigger.keyDown(KeyCode.Alt)
+    vi.advanceTimersByTime(500)
+    expect(onArm).not.toHaveBeenCalled()
+    expect(trigger.current).toBe('idle')
   })
 })

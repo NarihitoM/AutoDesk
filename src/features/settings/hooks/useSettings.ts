@@ -3,6 +3,8 @@ import { bridge } from '@/shared/lib/bridge'
 import { readIpcError } from '@/shared/lib/errors'
 import type { SettingsUpdate, SettingsView } from '@/shared/types/settings'
 
+const SAVED_MESSAGE_MS = 2500
+
 export type SaveStatus =
   | { kind: 'idle' }
   | { kind: 'saving' }
@@ -17,6 +19,12 @@ export function useSettings() {
   useEffect(() => {
     bridge.settings.get().then(setView, (error: unknown) => setLoadError(readIpcError(error)))
   }, [])
+
+  useEffect(() => {
+    if (status.kind !== 'saved') return
+    const timer = setTimeout(() => setStatus({ kind: 'idle' }), SAVED_MESSAGE_MS)
+    return () => clearTimeout(timer)
+  }, [status])
 
   const save = useCallback(async (update: SettingsUpdate): Promise<boolean> => {
     setStatus({ kind: 'saving' })

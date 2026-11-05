@@ -1,5 +1,6 @@
 export const Channels = {
   overlayReset: 'overlay:reset',
+  overlaySelection: 'overlay:selection',
   overlayBegin: 'overlay:begin',
   overlaySelect: 'overlay:select',
   overlayCancel: 'overlay:cancel',

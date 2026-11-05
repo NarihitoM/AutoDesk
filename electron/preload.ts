@@ -15,6 +15,7 @@ function listen<T>(channel: string, listener: (payload: T) => void): Unsubscribe
 const api: AutoDeskApi = {
   overlay: {
     onReset: (listener) => listen<void>(Channels.overlayReset, listener),
+    onSelection: (listener) => listen<SelectionRect>(Channels.overlaySelection, listener),
     begin: () => ipcRenderer.send(Channels.overlayBegin),
     select: (rect: SelectionRect) => ipcRenderer.send(Channels.overlaySelect, rect),
     cancel: () => ipcRenderer.send(Channels.overlayCancel)

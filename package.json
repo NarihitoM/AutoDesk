@@ -33,7 +33,9 @@
       "package.json"
     ],
     "asarUnpack": [
-      "node_modules/uiohook-napi/**"
+      "node_modules/uiohook-napi/**",
+      "node_modules/koffi/**",
+      "node_modules/@koromix/**"
     ],
     "win": {
       "target": "nsis",
@@ -47,6 +49,7 @@
     }
   },
   "dependencies": {
+    "koffi": "3.3.4",
     "uiohook-napi": "^1.5.5"
   },
   "devDependencies": {

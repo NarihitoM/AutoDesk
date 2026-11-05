@@ -17,7 +17,7 @@ export function defaultSettings(): Settings {
       compatible: { model: 'llava', baseUrl: 'http://localhost:8000/v1' }
     },
     prompt: DEFAULT_PROMPT,
-    modifier: 'alt',
+    captureKey: 'right-mouse',
     launchAtStartup: false
   }
 }

@@ -96,12 +96,12 @@ describe('settingsStore', () => {
     const legacyKey = Buffer.from('sealed:sk-ant-old').toString('base64')
     writeFileSync(
       join(paths.userData, 'settings.json'),
-      JSON.stringify({ settings: { activeProvider: 'gemini', modifier: 'ctrl' }, keys: { anthropic: legacyKey } })
+      JSON.stringify({ settings: { activeProvider: 'gemini', captureKey: 'ctrl' }, keys: { anthropic: legacyKey } })
     )
 
     const store = await loadStore()
     expect(store.getSettings().activeProvider).toBe('gemini')
-    expect(store.getSettings().modifier).toBe('ctrl')
+    expect(store.getSettings().captureKey).toBe('ctrl')
     expect(store.getApiKey('anthropic')).toBe('sk-ant-old')
     expect(existsSync(join(paths.home, '.autodesk', 'settings.json'))).toBe(true)
   })

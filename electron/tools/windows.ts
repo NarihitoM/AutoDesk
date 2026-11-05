@@ -3,6 +3,7 @@ import {
   screen,
   shell,
   type Display,
+  type Point,
   type WebContents,
   type WebPreferences
 } from 'electron'
@@ -88,9 +89,9 @@ export function createOverlayWindow(): void {
   loadRoute(overlay, 'overlay')
 }
 
-export function showOverlay(): void {
+export function showOverlay(point: Point = screen.getCursorScreenPoint()): void {
   if (!overlay) return
-  const display = screen.getDisplayNearestPoint(screen.getCursorScreenPoint())
+  const display = screen.getDisplayNearestPoint(point)
   overlayDisplay = display
   overlay.setBounds(display.bounds)
   overlay.setBounds(display.bounds)
@@ -102,6 +103,10 @@ export function hideOverlay(): void {
   if (!overlay?.isVisible()) return
   overlay.hide()
   overlay.webContents.send(Channels.overlayReset)
+}
+
+export function sendOverlaySelection(rect: SelectionRect): void {
+  overlay?.webContents.send(Channels.overlaySelection, rect)
 }
 
 export function getOverlayDisplay(): Display | null {

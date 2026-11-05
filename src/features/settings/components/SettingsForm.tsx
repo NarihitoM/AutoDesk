@@ -1,15 +1,15 @@
 import { useState, type FormEvent } from 'react'
 import { bridge } from '@/shared/lib/bridge'
 import {
-  MODIFIER_KEYS,
-  MODIFIER_LABELS,
+  CAPTURE_KEY_LABELS,
+  CAPTURE_KEYS,
   PROVIDER_IDS,
   PROVIDER_LABELS,
   PROVIDER_SHORT_LABELS
 } from '@/shared/lib/providers'
 import type {
+  CaptureKey,
   KeyChange,
-  ModifierKey,
   ProviderConfig,
   ProviderId,
   Settings,
@@ -37,6 +37,13 @@ function buildKeyChanges(drafts: KeyDrafts, cleared: ReadonlySet<ProviderId>): P
     else if (cleared.has(id)) changes[id] = { action: 'clear' }
   }
   return changes
+}
+
+function captureHint(key: CaptureKey): string {
+  if (key === 'right-mouse') {
+    return 'Hold the right mouse button and drag to select an area. A normal right-click still opens menus as usual.'
+  }
+  return 'Hold this key, then left-click and drag to select an area. Pressing any other key cancels, so normal shortcuts keep working.'
 }
 
 function statusText(status: SaveStatus): string {
@@ -127,22 +134,19 @@ export function SettingsForm({ view, status, onSave }: SettingsFormProps) {
           <span className={styles.label}>Capture key</span>
           <select
             className={styles.input}
-            value={draft.modifier}
+            value={draft.captureKey}
             onChange={(event) => {
-              const modifier = MODIFIER_KEYS.find((key) => key === event.target.value)
-              if (modifier) update('modifier', modifier satisfies ModifierKey)
+              const captureKey = CAPTURE_KEYS.find((key) => key === event.target.value)
+              if (captureKey) update('captureKey', captureKey)
             }}
           >
-            {MODIFIER_KEYS.map((key) => (
+            {CAPTURE_KEYS.map((key) => (
               <option key={key} value={key}>
-                {MODIFIER_LABELS[key]}
+                {CAPTURE_KEY_LABELS[key]}
               </option>
             ))}
           </select>
-          <span className={styles.hint}>
-            Hold this key, then left-click and drag to select an area. Pressing any other key cancels, so
-            normal shortcuts keep working.
-          </span>
+          <span className={styles.hint}>{captureHint(draft.captureKey)}</span>
         </label>
 
         <label className={styles.field}>

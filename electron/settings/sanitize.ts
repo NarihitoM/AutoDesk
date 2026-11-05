@@ -1,4 +1,4 @@
-import { byProvider, MODIFIER_KEYS, PROVIDER_IDS } from '@/shared/lib/providers'
+import { byProvider, CAPTURE_KEYS, PROVIDER_IDS } from '@/shared/lib/providers'
 import type { ModelListRequest } from '@/shared/types/models'
 import type { KeyChange, ProviderConfig, ProviderId, Settings } from '@/shared/types/settings'
 import { asText, pick } from '../lib/json'
@@ -27,7 +27,7 @@ export function sanitizeSettings(raw: unknown): Settings {
     activeProvider: oneOf(pick(raw, 'activeProvider'), PROVIDER_IDS, defaults.activeProvider),
     providers: byProvider((id) => sanitizeProvider(pick(providers, id), defaults.providers[id])),
     prompt: nonEmptyText(pick(raw, 'prompt'), defaults.prompt),
-    modifier: oneOf(pick(raw, 'modifier'), MODIFIER_KEYS, defaults.modifier),
+    captureKey: oneOf(pick(raw, 'captureKey'), CAPTURE_KEYS, defaults.captureKey),
     launchAtStartup: pick(raw, 'launchAtStartup') === true
   }
 }

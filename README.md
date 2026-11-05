@@ -2,7 +2,7 @@
 
 <img src="public/img/autodesk-banner.png" alt="AutoDesk - Screen to AI. Instant answers." width="720" />
 
-### Hold Alt. Drag over anything. Get an answer right where you are looking.
+### Right-click and drag over anything. Get an answer right where you are looking.
 
 [![CI](https://img.shields.io/github/actions/workflow/status/NarihitoM/AutoDesk/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/NarihitoM/AutoDesk/actions/workflows/ci.yml)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D4?style=flat-square)
@@ -25,12 +25,12 @@ AutoDesk is a lightweight Windows tray app that turns any part of your screen in
 <table>
   <tr>
     <td width="50%" valign="top">
-      <h4>Hold and drag to capture</h4>
-      Hold the capture key, drag a box, and let go. That is the whole workflow. No screenshot tool, no file to save, no window to switch to.
+      <h4>Right-click and drag to capture</h4>
+      Hold the right mouse button, drag a box, and let go. That is the whole workflow. No screenshot tool, no file to save, no window to switch to.
     </td>
     <td width="50%" valign="top">
-      <h4>Your shortcuts keep working</h4>
-      Capture starts only when the key is held on its own. Alt+Tab and every other shortcut behave exactly as before.
+      <h4>Your right-click keeps working</h4>
+      A quick right-click still opens menus as usual. Only a right-drag starts a capture, and you can switch to Alt, Ctrl, or Shift + drag instead.
     </td>
   </tr>
   <tr>
@@ -83,14 +83,15 @@ Open **Settings** from the tray icon, pick the provider, paste the key, and choo
 
 **2. Capture**
 
-Hold **Alt**, drag over part of your screen, and let go. The answer appears in a panel next to your selection.
+Hold the **right mouse button**, drag over part of your screen, and let go. The answer appears in a panel next to your selection.
 
 ### Controls
 
 | Action | How |
 | --- | --- |
-| Capture an area | Hold <kbd>Alt</kbd>, then left-click and drag |
-| Cancel a capture | <kbd>Esc</kbd>, right-click, or release <kbd>Alt</kbd> before dragging |
+| Capture an area | Hold the right mouse button and drag |
+| Open a normal context menu | Right-click without dragging |
+| Cancel a capture | <kbd>Esc</kbd> while dragging, or drag a box smaller than 8 px |
 | Ask a follow-up | Type in the panel and press <kbd>Enter</kbd> (<kbd>Shift</kbd>+<kbd>Enter</kbd> adds a new line) |
 | Stop a reply | Click **Stop** |
 | Close the panel | <kbd>Esc</kbd> or **Close** |
@@ -104,7 +105,7 @@ Hold **Alt**, drag over part of your screen, and let go. The answer appears in a
 | API key | Your key for that provider. Optional for local servers. |
 | Model | A dropdown of the provider's live model list, showing only models that accept images. Before a key is added, it shows suggested models. |
 | Base URL | Change only for a proxy or a self-hosted server |
-| Capture key | <kbd>Alt</kbd>, <kbd>Ctrl</kbd>, or <kbd>Shift</kbd> |
+| Capture key | Right mouse button (default), or hold <kbd>Alt</kbd>, <kbd>Ctrl</kbd>, or <kbd>Shift</kbd> and left-drag |
 | Prompt | The instruction sent with every capture |
 | Start with Windows | Launch AutoDesk when you sign in |
 
@@ -168,7 +169,7 @@ npm run typecheck    # TypeScript checks
 npm run dist         # build the installer into dist/
 ```
 
-**Tech stack:** Electron, React, TypeScript, Vite (electron-vite), Zustand, and `uiohook-napi` to detect the capture key globally.
+**Tech stack:** Electron, React, TypeScript, Vite (electron-vite), Zustand, `uiohook-napi` to detect the capture key globally, and `koffi` for the Windows mouse hook behind right-drag capture.
 
 <details>
 <summary><b>How capture works</b></summary>
@@ -176,17 +177,18 @@ npm run dist         # build the installer into dist/
 
 ```mermaid
 flowchart LR
-    A[Hold capture key<br/>for 150 ms] --> B[Transparent overlay<br/>covers the screen]
+    A[Right-drag past 6 px] --> B[Transparent overlay<br/>covers the screen]
     B --> C[Drag a box]
     C --> D[Crop from a full-resolution<br/>capture of that monitor]
     D --> E[Send image and prompt<br/>to the chosen provider]
     E --> F[Stream the answer<br/>into the panel]
 ```
 
-1. A global keyboard hook watches for the capture key being held on its own for 150 ms. Pressing any other key, or clicking first, cancels it.
-2. A transparent overlay window covers the screen under the cursor, so your drag goes to the overlay and never to the app underneath.
-3. On release, the selected area is cropped from a full-resolution capture of that monitor. The overlay is excluded from the capture.
-4. The image is sent with your prompt to the provider, and the reply streams into the panel.
+1. A low-level Windows mouse hook, running on its own thread, holds back the right button press. If you release without moving, it replays a normal right-click, so context menus still open. If you move more than 6 px, a capture starts and the app underneath never sees the click.
+2. A transparent overlay window covers the screen under the cursor and draws the selection as you drag.
+3. With Alt, Ctrl, or Shift as the capture key, a global keyboard hook arms the overlay after the key is held on its own for 150 ms, and you left-drag on the overlay instead.
+4. On release, the selected area is cropped from a full-resolution capture of that monitor. The overlay is excluded from the capture.
+5. The image is sent with your prompt to the provider, and the reply streams into the panel.
 
 </details>
 
@@ -238,5 +240,6 @@ The Release workflow sets the app version from the tag, runs the checks, builds 
 | `npm run dev` fails with `reading 'requestSingleInstanceLock'` | Your terminal has `ELECTRON_RUN_AS_NODE` set. Clear it with `Remove-Item Env:ELECTRON_RUN_AS_NODE` (PowerShell) or `unset ELECTRON_RUN_AS_NODE` (bash). |
 | The panel says to add an API key | Open Settings from the tray icon, paste a key for the selected provider, and click Save. |
 | A local model ignores the image | The model does not support images. Use a vision model such as `llava` or `qwen2.5vl`. |
-| Holding Alt does nothing | Check that capture is not paused in the tray menu, and that the capture key in Settings is Alt. |
+| Right-drag does nothing | Check that capture is not paused in the tray menu, and that the capture key in Settings is Right mouse button. |
+| A game or app needs right-drag | Choose **Pause capture** in the tray menu while you use it, or switch the capture key to Alt, Ctrl, or Shift. |
 | The model list says it could not load models | Check the API key and base URL. For Ollama and LM Studio, make sure the app is running and its local server is started. Suggested models are shown until the list loads. |
