@@ -1,0 +1,49 @@
+.root {
+  position: fixed;
+  inset: 0;
+  cursor: crosshair;
+  user-select: none;
+  background: rgba(8, 10, 16, 0.24);
+}
+
+.root[data-selecting='true'] {
+  background: rgba(0, 0, 0, 0.004);
+}
+
+.selection {
+  position: absolute;
+  outline: 1.5px solid var(--accent);
+  box-shadow: 0 0 0 100vmax rgba(8, 10, 16, 0.42);
+}
+
+.size {
+  position: absolute;
+  left: -1px;
+  top: -28px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(20, 21, 27, 0.9);
+  color: var(--text);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.size[data-inside='true'] {
+  top: 6px;
+  left: 6px;
+}
+
+.hint {
+  position: fixed;
+  top: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: rgba(20, 21, 27, 0.92);
+  color: var(--text);
+  font-size: 13px;
+  pointer-events: none;
+}
