@@ -8,5 +8,9 @@ export const providers: Record<ProviderId, VisionProvider> = {
   openai: openAiProvider,
   anthropic: anthropicProvider,
   gemini: geminiProvider,
+  groq: openAiProvider,
+  openrouter: openAiProvider,
+  ollama: openAiProvider,
+  lmstudio: openAiProvider,
   compatible: openAiProvider
 }

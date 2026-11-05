@@ -1,4 +1,12 @@
-export type ProviderId = 'openai' | 'anthropic' | 'gemini' | 'compatible'
+export type ProviderId =
+  | 'openai'
+  | 'anthropic'
+  | 'gemini'
+  | 'groq'
+  | 'openrouter'
+  | 'ollama'
+  | 'lmstudio'
+  | 'compatible'
 
 export type ModifierKey = 'alt' | 'ctrl' | 'shift'
 

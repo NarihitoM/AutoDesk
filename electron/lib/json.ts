@@ -18,6 +18,14 @@ export function asText(value: unknown): string | null {
   return typeof value === 'string' ? value : null
 }
 
+export function asNumber(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
+}
+
+export function asArray(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : []
+}
+
 export function parseJson(source: string): unknown {
   try {
     return JSON.parse(source)

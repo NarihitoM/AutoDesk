@@ -1,5 +1,11 @@
 import { useState, type FormEvent } from 'react'
-import { MODIFIER_KEYS, MODIFIER_LABELS, PROVIDER_IDS, PROVIDER_LABELS } from '@/shared/lib/providers'
+import {
+  MODIFIER_KEYS,
+  MODIFIER_LABELS,
+  PROVIDER_IDS,
+  PROVIDER_LABELS,
+  PROVIDER_SHORT_LABELS
+} from '@/shared/lib/providers'
 import type {
   KeyChange,
   ModifierKey,
@@ -11,6 +17,7 @@ import type {
 } from '@/shared/types/settings'
 import type { SaveStatus } from '../hooks/useSettings'
 import { ProviderForm } from './ProviderForm'
+import { ProviderLogo } from './ProviderLogo'
 import styles from './Settings.module.css'
 
 interface SettingsFormProps {
@@ -89,9 +96,13 @@ export function SettingsForm({ view, status, onSave }: SettingsFormProps) {
               aria-checked={id === active}
               className={styles.segment}
               data-active={id === active}
+              title={PROVIDER_LABELS[id]}
               onClick={() => update('activeProvider', id)}
             >
-              {PROVIDER_LABELS[id]}
+              <span className={styles.logo}>
+                <ProviderLogo provider={id} />
+              </span>
+              <span className={styles.segmentLabel}>{PROVIDER_SHORT_LABELS[id]}</span>
               {view.storedKeys[id] && !clearedKeys.has(id) && <span className={styles.dot} aria-label="Key saved" />}
             </button>
           ))}

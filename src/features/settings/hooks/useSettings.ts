@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { bridge } from '@/shared/lib/bridge'
+import { readIpcError } from '@/shared/lib/errors'
 import type { SettingsUpdate, SettingsView } from '@/shared/types/settings'
 
 export type SaveStatus =
@@ -8,18 +9,13 @@ export type SaveStatus =
   | { kind: 'saved' }
   | { kind: 'error'; message: string }
 
-function readError(error: unknown): string {
-  const message = error instanceof Error ? error.message : String(error)
-  return message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '')
-}
-
 export function useSettings() {
   const [view, setView] = useState<SettingsView | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [status, setStatus] = useState<SaveStatus>({ kind: 'idle' })
 
   useEffect(() => {
-    bridge.settings.get().then(setView, (error: unknown) => setLoadError(readError(error)))
+    bridge.settings.get().then(setView, (error: unknown) => setLoadError(readIpcError(error)))
   }, [])
 
   const save = useCallback(async (update: SettingsUpdate): Promise<boolean> => {
@@ -29,7 +25,7 @@ export function useSettings() {
       setStatus({ kind: 'saved' })
       return true
     } catch (error) {
-      setStatus({ kind: 'error', message: readError(error) })
+      setStatus({ kind: 'error', message: readIpcError(error) })
       return false
     }
   }, [])

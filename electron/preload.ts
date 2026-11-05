@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 import { Channels } from '@/shared/lib/channels'
 import type { AutoDeskApi, PanelEvent, SelectionRect, Unsubscribe } from '@/shared/types/ipc'
+import type { ModelListRequest, ModelListResult } from '@/shared/types/models'
 import type { SettingsUpdate, SettingsView } from '@/shared/types/settings'
 
 function listen<T>(channel: string, listener: (payload: T) => void): Unsubscribe {
@@ -27,7 +28,9 @@ const api: AutoDeskApi = {
   },
   settings: {
     get: (): Promise<SettingsView> => ipcRenderer.invoke(Channels.settingsGet),
-    save: (update: SettingsUpdate): Promise<SettingsView> => ipcRenderer.invoke(Channels.settingsSave, update)
+    save: (update: SettingsUpdate): Promise<SettingsView> => ipcRenderer.invoke(Channels.settingsSave, update),
+    listModels: (request: ModelListRequest): Promise<ModelListResult> =>
+      ipcRenderer.invoke(Channels.modelsList, request)
   }
 }
 

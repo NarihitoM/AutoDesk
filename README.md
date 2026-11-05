@@ -40,7 +40,7 @@ AutoDesk is a lightweight Windows tray app that turns any part of your screen in
     </td>
     <td width="50%" valign="top">
       <h4>Your choice of AI</h4>
-      OpenAI, Anthropic Claude, Google Gemini, or a free local model through Ollama. LM Studio, OpenRouter, and Groq work too.
+      OpenAI, Claude, Gemini, Groq, OpenRouter, or a free local model through Ollama or LM Studio. The model list loads live and shows only models that can read images.
     </td>
   </tr>
   <tr>
@@ -73,9 +73,13 @@ AutoDesk is a lightweight Windows tray app that turns any part of your screen in
 | OpenAI | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) | Yes |
 | Anthropic Claude | [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys) | Yes |
 | Google Gemini | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) | Yes |
+| Groq | [console.groq.com/keys](https://console.groq.com/keys) | Yes |
+| OpenRouter | [openrouter.ai/keys](https://openrouter.ai/keys) | Yes |
 | Ollama (local, free) | Install [Ollama](https://ollama.com), then run `ollama pull llava` | No |
+| LM Studio (local, free) | Install [LM Studio](https://lmstudio.ai), load a vision model, and start the local server | No |
+| Custom | Any server with an OpenAI-compatible API | Optional |
 
-Open **Settings** from the tray icon, pick the provider, paste the key, and click **Save**.
+Open **Settings** from the tray icon, pick the provider, paste the key, and choose a model. The model list is fetched live from the provider and filtered to models that accept images. Click **Save** when you are done.
 
 **2. Capture**
 
@@ -98,7 +102,7 @@ Hold **Alt**, drag over part of your screen, and let go. The answer appears in a
 | --- | --- |
 | AI provider | Which service answers your captures |
 | API key | Your key for that provider. Optional for local servers. |
-| Model | Any model from that provider that can read images |
+| Model | Picked from the provider's live model list, showing only models that accept images. You can also type any model ID. |
 | Base URL | Change only for a proxy or a self-hosted server |
 | Capture key | <kbd>Alt</kbd>, <kbd>Ctrl</kbd>, or <kbd>Shift</kbd> |
 | Prompt | The instruction sent with every capture |
@@ -113,9 +117,26 @@ Hold **Alt**, drag over part of your screen, and let go. The answer appears in a
 | OpenAI | `gpt-5` | `https://api.openai.com/v1` |
 | Anthropic | `claude-opus-5-5` | `https://api.anthropic.com` |
 | Gemini | `gemini-2.5-flash` | `https://generativelanguage.googleapis.com` |
-| OpenAI-compatible | `llava` | `http://localhost:11434/v1` (Ollama) |
+| Groq | `meta-llama/llama-4-scout-17b-16e-instruct` | `https://api.groq.com/openai/v1` |
+| OpenRouter | `google/gemini-2.5-flash` | `https://openrouter.ai/api/v1` |
+| Ollama | `llava` | `http://localhost:11434/v1` |
+| LM Studio | `qwen2.5-vl-7b-instruct` | `http://localhost:1234/v1` |
+| Custom | `llava` | `http://localhost:8000/v1` |
 
-For LM Studio, use `http://localhost:1234/v1`. Pick a model that accepts images.
+</details>
+
+<details>
+<summary><b>How the model list knows which models accept images</b></summary>
+<br />
+
+| Provider | Source of the list | How image support is detected |
+| --- | --- | --- |
+| Anthropic | Models API | The `image_input` capability reported for each model |
+| OpenRouter | Models API | The model's `input_modalities` include `image` |
+| Ollama | `/api/tags` and `/api/show` | The model's capabilities include `vision` |
+| LM Studio | `/api/v0/models` | The model type is `vlm` |
+| OpenAI, Gemini | Models API | Matched by model family, since these APIs do not report image support |
+| Groq, Custom | `/models` | Matched by model name. If nothing matches, every model is shown. |
 
 </details>
 
@@ -209,3 +230,4 @@ The Release workflow sets the app version from the tag, runs the checks, builds 
 | The panel says to add an API key | Open Settings from the tray icon, paste a key for the selected provider, and click Save. |
 | A local model ignores the image | The model does not support images. Use a vision model such as `llava` or `qwen2.5vl`. |
 | Holding Alt does nothing | Check that capture is not paused in the tray menu, and that the capture key in Settings is Alt. |
+| The model list says it could not load models | Check the API key and base URL. For Ollama and LM Studio, make sure the app is running and its local server is started. You can still type a model ID by hand. |

@@ -1,5 +1,6 @@
-import { KEY_REQUIRED, PROVIDER_LABELS } from '@/shared/lib/providers'
+import { KEY_REQUIRED, KEY_URLS, PROVIDER_LABELS, USES_KEY } from '@/shared/lib/providers'
 import type { ProviderConfig, ProviderId } from '@/shared/types/settings'
+import { ModelPicker } from './ModelPicker'
 import styles from './Settings.module.css'
 
 interface ProviderFormProps {
@@ -17,55 +18,62 @@ const BASE_URL_HINTS: Record<ProviderId, string> = {
   openai: 'Change this only if you use a proxy.',
   anthropic: 'Change this only if you use a proxy.',
   gemini: 'Change this only if you use a proxy.',
-  compatible: 'Ollama: http://localhost:11434/v1. LM Studio: http://localhost:1234/v1. Also works with OpenRouter or Groq.'
-}
-
-const MODEL_HINTS: Record<ProviderId, string> = {
-  openai: 'Any OpenAI model that accepts images.',
-  anthropic: 'Any Claude model, for example claude-opus-5-5 or claude-haiku-5-5.',
-  gemini: 'Any Gemini model that accepts images.',
-  compatible: 'Use a vision model, for example llava or qwen2.5vl.'
+  groq: 'Change this only if you use a proxy.',
+  openrouter: 'Change this only if you use a proxy.',
+  ollama: 'Ollama runs on your PC at http://localhost:11434/v1 by default.',
+  lmstudio: 'Start the local server in LM Studio. The default address is http://localhost:1234/v1.',
+  compatible: 'Any server with an OpenAI-compatible chat completions API, for example vLLM or LocalAI.'
 }
 
 export function ProviderForm(props: ProviderFormProps) {
   const { id, config, hasStoredKey, keyDraft, keyCleared, onConfigChange, onKeyDraftChange, onClearKey } = props
   const keySaved = hasStoredKey && !keyCleared
-  const keyLabel = KEY_REQUIRED[id] ? 'API key' : 'API key (optional)'
+  const draft = keyDraft.trim()
+  const canFetchModels = !KEY_REQUIRED[id] || keySaved || draft !== ''
+  const keyUrl = KEY_URLS[id]
 
   return (
     <div className={styles.providerForm}>
-      <label className={styles.field}>
-        <span className={styles.label}>{keyLabel}</span>
-        <div className={styles.inline}>
-          <input
-            className={styles.input}
-            type="password"
-            autoComplete="off"
-            value={keyDraft}
-            placeholder={keySaved ? 'Saved. Type a new key to replace it.' : `Paste your ${PROVIDER_LABELS[id]} key`}
-            onChange={(event) => onKeyDraftChange(event.target.value)}
-          />
-          {keySaved && (
-            <button type="button" className={styles.secondaryButton} onClick={onClearKey}>
-              Remove
-            </button>
-          )}
-        </div>
-        <span className={styles.hint}>
-          {keyCleared ? 'The key will be removed when you save.' : 'Stored encrypted on this computer.'}
-        </span>
-      </label>
+      {USES_KEY[id] && (
+        <label className={styles.field}>
+          <span className={styles.label}>{KEY_REQUIRED[id] ? 'API key' : 'API key (optional)'}</span>
+          <div className={styles.inline}>
+            <input
+              className={styles.input}
+              type="password"
+              autoComplete="off"
+              value={keyDraft}
+              placeholder={keySaved ? 'Saved. Type a new key to replace it.' : `Paste your ${PROVIDER_LABELS[id]} key`}
+              onChange={(event) => onKeyDraftChange(event.target.value)}
+            />
+            {keySaved && (
+              <button type="button" className={styles.secondaryButton} onClick={onClearKey}>
+                Remove
+              </button>
+            )}
+          </div>
+          <span className={styles.hint}>
+            {keyCleared ? 'The key will be removed when you save.' : 'Stored encrypted on this computer.'}
+            {keyUrl && !keyCleared && (
+              <>
+                {' '}
+                <a className={styles.link} href={keyUrl} target="_blank" rel="noreferrer">
+                  Get a key
+                </a>
+              </>
+            )}
+          </span>
+        </label>
+      )}
 
-      <label className={styles.field}>
-        <span className={styles.label}>Model</span>
-        <input
-          className={styles.input}
-          value={config.model}
-          spellCheck={false}
-          onChange={(event) => onConfigChange({ ...config, model: event.target.value })}
-        />
-        <span className={styles.hint}>{MODEL_HINTS[id]}</span>
-      </label>
+      <ModelPicker
+        provider={id}
+        baseUrl={config.baseUrl}
+        apiKey={draft || undefined}
+        canFetch={canFetchModels}
+        value={config.model}
+        onChange={(model) => onConfigChange({ ...config, model })}
+      />
 
       <label className={styles.field}>
         <span className={styles.label}>Base URL</span>

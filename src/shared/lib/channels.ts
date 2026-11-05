@@ -9,5 +9,6 @@ export const Channels = {
   panelStop: 'panel:stop',
   panelClose: 'panel:close',
   settingsGet: 'settings:get',
-  settingsSave: 'settings:save'
+  settingsSave: 'settings:save',
+  modelsList: 'models:list'
 } as const

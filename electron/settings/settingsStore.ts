@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { app, safeStorage } from 'electron'
-import { PROVIDER_IDS } from '@/shared/lib/providers'
+import { byProvider, PROVIDER_IDS } from '@/shared/lib/providers'
 import type { ProviderId, Settings, SettingsUpdate, SettingsView } from '@/shared/types/settings'
 import { asText, parseJson, pick } from '../lib/json'
 import { defaultSettings } from './defaults'
@@ -69,12 +69,7 @@ export function getApiKey(id: ProviderId): string | null {
 export function getSettingsView(): SettingsView {
   return {
     settings: data.settings,
-    storedKeys: {
-      openai: Boolean(data.keys.openai),
-      anthropic: Boolean(data.keys.anthropic),
-      gemini: Boolean(data.keys.gemini),
-      compatible: Boolean(data.keys.compatible)
-    }
+    storedKeys: byProvider((id) => Boolean(data.keys[id]))
   }
 }
 

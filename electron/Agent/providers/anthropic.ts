@@ -1,7 +1,7 @@
 import { asText, parseJson, pick } from '../../lib/json'
 import { joinUrl, type ChatRequest, type ChatTurn, type VisionProvider } from '../types'
 
-const API_VERSION = '2026-10-21'
+export const API_VERSION = '2026-10-21'
 const FALLBACK_BETA = 'server-side-fallback-2026-07-01'
 const FALLBACK_MODELS = new Set(['claude-fable-5-1', 'claude-opus-5-5', 'claude-opus-5', 'claude-sonnet-5-5'])
 const FIRST_PARTY_HOST = 'api.anthropic.com'

@@ -1,4 +1,5 @@
-import { MODIFIER_KEYS, PROVIDER_IDS } from '@/shared/lib/providers'
+import { byProvider, MODIFIER_KEYS, PROVIDER_IDS } from '@/shared/lib/providers'
+import type { ModelListRequest } from '@/shared/types/models'
 import type { KeyChange, ProviderConfig, ProviderId, Settings } from '@/shared/types/settings'
 import { asText, pick } from '../lib/json'
 import { defaultSettings } from './defaults'
@@ -24,12 +25,7 @@ export function sanitizeSettings(raw: unknown): Settings {
   const providers = pick(raw, 'providers')
   return {
     activeProvider: oneOf(pick(raw, 'activeProvider'), PROVIDER_IDS, defaults.activeProvider),
-    providers: {
-      openai: sanitizeProvider(pick(providers, 'openai'), defaults.providers.openai),
-      anthropic: sanitizeProvider(pick(providers, 'anthropic'), defaults.providers.anthropic),
-      gemini: sanitizeProvider(pick(providers, 'gemini'), defaults.providers.gemini),
-      compatible: sanitizeProvider(pick(providers, 'compatible'), defaults.providers.compatible)
-    },
+    providers: byProvider((id) => sanitizeProvider(pick(providers, id), defaults.providers[id])),
     prompt: nonEmptyText(pick(raw, 'prompt'), defaults.prompt),
     modifier: oneOf(pick(raw, 'modifier'), MODIFIER_KEYS, defaults.modifier),
     launchAtStartup: pick(raw, 'launchAtStartup') === true
@@ -45,4 +41,17 @@ export function sanitizeKeyChanges(raw: unknown): Partial<Record<ProviderId, Key
     if (action === 'set' && value) changes[id] = { action: 'set', value }
   }
   return changes
+}
+
+export function sanitizeModelListRequest(raw: unknown): ModelListRequest {
+  const provider = PROVIDER_IDS.find((id) => id === pick(raw, 'provider'))
+  if (!provider) throw new Error('Unknown provider.')
+
+  const baseUrl = asText(pick(raw, 'baseUrl'))?.trim().replace(/\/+$/, '') ?? ''
+  if (!URL.canParse(baseUrl) || !/^https?:$/.test(new URL(baseUrl).protocol)) {
+    throw new Error('Enter a valid base URL that starts with http:// or https://.')
+  }
+
+  const apiKey = asText(pick(raw, 'apiKey'))?.trim()
+  return apiKey ? { provider, baseUrl, apiKey } : { provider, baseUrl }
 }

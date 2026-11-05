@@ -1,18 +1,6 @@
-import { asText, parseJson, pick } from '../lib/json'
+import { describeFailure } from './http'
 import { SseParser } from './sse'
 import type { ChatRequest, VisionProvider } from './types'
-
-async function describeFailure(response: Response): Promise<string> {
-  const body = await response.text().catch(() => '')
-  const parsed = parseJson(body)
-  const message =
-    asText(pick(parsed, 'error', 'message')) ??
-    asText(pick(parsed, 0, 'error', 'message')) ??
-    asText(pick(parsed, 'error')) ??
-    body.trim().slice(0, 300)
-  const status = `${response.status} ${response.statusText}`.trim()
-  return message ? `${status}: ${message}` : status
-}
 
 export async function* streamChat(
   provider: VisionProvider,

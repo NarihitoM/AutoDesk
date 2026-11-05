@@ -1,3 +1,4 @@
+import type { ModelListRequest, ModelListResult } from './models'
 import type { SettingsUpdate, SettingsView } from './settings'
 
 export interface SelectionRect {
@@ -49,5 +50,6 @@ export interface AutoDeskApi {
   settings: {
     get(): Promise<SettingsView>
     save(update: SettingsUpdate): Promise<SettingsView>
+    listModels(request: ModelListRequest): Promise<ModelListResult>
   }
 }
