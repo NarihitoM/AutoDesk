@@ -86,6 +86,17 @@ npm run dist       # build the installer into dist/
 
 Tech stack: Electron, React, TypeScript, Vite (electron-vite), Zustand, and `uiohook-napi` to detect the capture key globally.
 
+### Releases
+
+CI runs typecheck, tests, and a build on every push to `main` and on every pull request. To publish a new installer, push a version tag:
+
+```bash
+git tag v0.2.0
+git push origin v0.2.0
+```
+
+The Release workflow sets the app version from the tag, builds `AutoDesk Setup 0.2.0.exe`, and attaches it to a new GitHub Release with auto-generated notes.
+
 ### How capture works
 
 1. A global keyboard hook watches for the capture key being held on its own for 150 ms. Pressing any other key, or clicking first, cancels it.
