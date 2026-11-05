@@ -12,7 +12,7 @@ import {
 import { Channels } from '@/shared/lib/channels'
 import type { PanelEvent, SelectionRect } from '@/shared/types/ipc'
 import type { ThemeMode } from '@/shared/types/settings'
-import { APP_ICON_PATH, PRELOAD_PATH, RENDERER_HTML_PATH } from '../lib/paths'
+import { APP_WINDOW_ICON_PATH, PRELOAD_PATH, RENDERER_HTML_PATH } from '../lib/paths'
 import { placePanel } from './geometry'
 
 type Route = 'overlay' | 'panel' | 'settings'
@@ -151,7 +151,7 @@ export function createPanelWindow(): void {
     skipTaskbar: true,
     alwaysOnTop: true,
     title: 'AutoDesk',
-    icon: APP_ICON_PATH,
+    icon: APP_WINDOW_ICON_PATH,
     backgroundColor: surfaceColor(),
     webPreferences: webPreferences()
   })
@@ -217,7 +217,7 @@ export function openSettingsWindow(): void {
     minHeight: 520,
     show: false,
     title: 'AutoDesk Settings',
-    icon: APP_ICON_PATH,
+    icon: APP_WINDOW_ICON_PATH,
     autoHideMenuBar: true,
     backgroundColor: surfaceColor(),
     webPreferences: webPreferences()

@@ -218,7 +218,7 @@ src/
     settings/        the settings window
   shared/            types, helpers, and assets shared across the app
   pages/             one thin page per window
-resources/icon.png   app and tray icon
+public/img/          app and tray icons, README banner
 ```
 
 </details>

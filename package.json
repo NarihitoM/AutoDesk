@@ -25,11 +25,12 @@
     "productName": "AutoDesk",
     "directories": {
       "output": "dist",
-      "buildResources": "resources"
+      "buildResources": "public/img"
     },
     "files": [
       "out/**",
-      "resources/**",
+      "public/img/autodesk-icon.png",
+      "public/img/autodesk-icon.ico",
       "package.json"
     ],
     "asarUnpack": [
@@ -39,7 +40,7 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "resources/icon.png"
+      "icon": "autodesk-icon.ico"
     },
     "nsis": {
       "oneClick": false,
