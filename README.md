@@ -218,7 +218,10 @@ src/
     settings/        the settings window
   shared/            types, helpers, and assets shared across the app
   pages/             one thin page per window
-public/img/          app and tray icons, README banner
+public/img/
+  autodesk-icon.png   tray icon
+  autodesk-icon.ico   app and window icon
+  autodesk-banner.png README banner
 ```
 
 </details>
