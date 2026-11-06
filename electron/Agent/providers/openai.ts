@@ -28,6 +28,7 @@ export const openAiProvider: VisionProvider = {
       messages: request.turns.map(toMessage)
     }
     if (request.maxTokens) body[tokenLimitField(request.baseUrl)] = request.maxTokens
+    if (request.skipReasoning) body.reasoning_effort = 'none'
     return { url: joinUrl(request.baseUrl, 'chat/completions'), headers, body }
   },
 

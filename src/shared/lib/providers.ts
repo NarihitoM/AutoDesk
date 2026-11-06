@@ -57,6 +57,17 @@ export const KEY_REQUIRED: Record<ProviderId, boolean> = {
   compatible: false
 }
 
+export const CAN_SKIP_REASONING: Record<ProviderId, boolean> = {
+  openai: false,
+  anthropic: false,
+  gemini: false,
+  groq: false,
+  openrouter: false,
+  ollama: true,
+  lmstudio: false,
+  compatible: false
+}
+
 export const USES_KEY: Record<ProviderId, boolean> = byProvider((id) => id !== 'ollama' && id !== 'lmstudio')
 
 export const KEY_URLS: Partial<Record<ProviderId, string>> = {

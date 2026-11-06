@@ -309,6 +309,7 @@ The Release workflow sets the app version from the tag, runs the checks, builds 
 | Live assist says the speech engine is missing | Run `npm run fetch:speech` (development only; the installer already includes it). |
 | Live assist hears nothing from a call | Make sure the audio plays through the default output device. |
 | Live chat shows `413 Payload Too Large` or a rate limit error | Your provider's free tier allows very few tokens per minute for that model. Pick a model with a higher limit, such as `llama-3.1-8b-instant` on Groq, or upgrade the plan. |
+| Live chat AI replies are empty or very slow | The model is a thinking model that spends its reply on reasoning. AutoDesk turns reasoning off for Ollama, so update Ollama if it still happens, or choose a model that answers directly. |
 | The model list says it could not load models | Check the API key and base URL. For Ollama and LM Studio, make sure the app is running and its local server is started. The model dropdown stays empty until the list loads. |
 
 ## Third-party software

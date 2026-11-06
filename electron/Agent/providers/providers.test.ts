@@ -49,6 +49,11 @@ describe('openAiProvider', () => {
     expect(openAi.body).not.toHaveProperty('max_tokens')
   })
 
+  it('asks the server to skip reasoning when requested', () => {
+    expect(openAiProvider.buildRequest(request({ skipReasoning: true })).body).toMatchObject({ reasoning_effort: 'none' })
+    expect(openAiProvider.buildRequest(request()).body).not.toHaveProperty('reasoning_effort')
+  })
+
   it('omits the auth header without a key', () => {
     const http = openAiProvider.buildRequest(request({ apiKey: null }))
     expect(http.headers.Authorization).toBeUndefined()

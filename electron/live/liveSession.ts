@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { globalShortcut } from 'electron'
-import { KEY_REQUIRED, LIVE_HOTKEY, LIVE_HOTKEY_LABEL } from '@/shared/lib/providers'
+import { CAN_SKIP_REASONING, KEY_REQUIRED, LIVE_HOTKEY, LIVE_HOTKEY_LABEL } from '@/shared/lib/providers'
 import type { ListenerStatus, LiveState, LiveStatus, Suggestion, TranscriptLine } from '@/shared/types/live'
 import { providers } from '../Agent/providers'
 import { streamChat } from '../Agent/stream'
@@ -15,6 +15,8 @@ const TURN_GAP_MS = 1500
 const MAX_LINES = 400
 const MAX_SUGGESTIONS = 20
 const REPLY_MAX_TOKENS = 1024
+const EMPTY_REPLY =
+  'The model sent back no answer. Thinking models can use the whole reply on reasoning. Choose a model that answers directly in Settings.'
 
 function describeError(error: unknown): string {
   return error instanceof Error && error.message ? error.message : 'Something went wrong.'
@@ -252,12 +254,14 @@ class LiveSession {
         baseUrl: config.baseUrl,
         apiKey,
         maxTokens: REPLY_MAX_TOKENS,
+        skipReasoning: CAN_SKIP_REASONING[providerId],
         turns: [{ role: 'user' as const, text: buildLivePrompt(settings.live.prompt, this.lines) }]
       }
       for await (const delta of streamChat(providers[providerId], request, controller.signal)) {
         suggestion.text += delta
         sendLiveEvent({ type: 'delta', id: suggestion.id, text: delta })
       }
+      if (!suggestion.text.trim()) suggestion.error = EMPTY_REPLY
     } catch (error) {
       if (!controller.signal.aborted) suggestion.error = describeError(error)
     } finally {
