@@ -16,7 +16,11 @@ function reduce(state: LiveState | null, event: LiveEvent): LiveState | null {
     case 'line': {
       const partials = { ...state.partials }
       delete partials[event.line.speaker]
-      return { ...state, lines: [...state.lines, event.line], partials }
+      const exists = state.lines.some((line) => line.id === event.line.id)
+      const lines = exists
+        ? state.lines.map((line) => (line.id === event.line.id ? event.line : line))
+        : [...state.lines, event.line]
+      return { ...state, lines, partials }
     }
     case 'partial': {
       const partials = { ...state.partials }

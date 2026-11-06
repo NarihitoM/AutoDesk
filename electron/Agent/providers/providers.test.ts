@@ -42,6 +42,13 @@ describe('openAiProvider', () => {
     })
   })
 
+  it('limits output tokens with the field each server expects', () => {
+    expect(openAiProvider.buildRequest(request({ maxTokens: 500 })).body).toMatchObject({ max_tokens: 500 })
+    const openAi = openAiProvider.buildRequest(request({ maxTokens: 500, baseUrl: 'https://api.openai.com/v1' }))
+    expect(openAi.body).toMatchObject({ max_completion_tokens: 500 })
+    expect(openAi.body).not.toHaveProperty('max_tokens')
+  })
+
   it('omits the auth header without a key', () => {
     const http = openAiProvider.buildRequest(request({ apiKey: null }))
     expect(http.headers.Authorization).toBeUndefined()
@@ -87,6 +94,10 @@ describe('anthropicProvider', () => {
     expect(http.body).toMatchObject({ fallbacks: 'default' })
   })
 
+  it('uses the requested output token limit', () => {
+    expect(anthropicProvider.buildRequest(request({ maxTokens: 500 })).body).toMatchObject({ max_tokens: 500 })
+  })
+
   it('reads text deltas and ignores other events', () => {
     const delta = '{"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Hello"}}'
     expect(anthropicProvider.readDelta(delta)).toBe('Hello')
@@ -120,6 +131,12 @@ describe('geminiProvider', () => {
         { role: 'model', parts: [{ text: 'A chart.' }] },
         { role: 'user', parts: [{ text: 'Explain more' }] }
       ]
+    })
+  })
+
+  it('limits output tokens when asked', () => {
+    expect(geminiProvider.buildRequest(request({ maxTokens: 500 })).body).toMatchObject({
+      generationConfig: { maxOutputTokens: 500 }
     })
   })
 

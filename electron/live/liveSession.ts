@@ -19,9 +19,17 @@ import { whisperServer } from '../speech/whisperServer'
 import { sendListenerCommand, sendLiveEvent } from '../tools/windows'
 import { buildLivePrompt, latestQuestion } from './livePrompt'
 
-const ANSWER_DELAY_MS = 1200
+const TURN_GAP_MS = 1500
 const MAX_LINES = 400
 const MAX_SUGGESTIONS = 20
+const REPLY_MAX_TOKENS = 1024
+const SPEAKERS: readonly Speaker[] = ['them', 'you']
+
+type PerSpeaker<T> = Record<Speaker, T>
+
+function perSpeaker<T>(value: T): PerSpeaker<T> {
+  return { them: value, you: value }
+}
 
 function describeError(error: unknown): string {
   return error instanceof Error && error.message ? error.message : 'Something went wrong.'
@@ -34,16 +42,17 @@ class LiveSession {
   private suggestions: Suggestion[] = []
   private speakers = new Set<Speaker>()
   private queue: Promise<void> = Promise.resolve()
-  private answerTimer: ReturnType<typeof setTimeout> | null = null
   private controller: AbortController | null = null
   private running = false
   private run = 0
-  private finalized: Record<Speaker, number> = { them: 0, you: 0 }
-  private pendingFinals = 0
+  private finalized = perSpeaker(0)
+  private pending = perSpeaker(0)
+  private speaking = perSpeaker(false)
+  private turnTimers: Partial<PerSpeaker<ReturnType<typeof setTimeout>>> = {}
   private partialBusy = false
   private answering = false
   private answerAgain = false
-  private answeredLineId: string | null = null
+  private answeredKey: string | null = null
 
   snapshot(): LiveState {
     return {
@@ -66,7 +75,7 @@ class LiveSession {
     this.running = true
     this.run += 1
     this.speakers.clear()
-    this.resetPartials()
+    this.resetTurns()
     this.setStatus({ kind: 'starting' })
     try {
       await whisperServer.start(live.language)
@@ -86,8 +95,8 @@ class LiveSession {
     this.running = false
     this.run += 1
     this.speakers.clear()
-    this.resetPartials()
-    this.clearAnswerTimer()
+    this.closeOpenLine()
+    this.resetTurns()
     this.answerAgain = false
     this.controller?.abort()
     sendListenerCommand({ type: 'stop' })
@@ -111,10 +120,21 @@ class LiveSession {
     }
   }
 
+  activity(speaker: Speaker, speaking: boolean): void {
+    if (!this.running) return
+    this.speaking[speaker] = speaking
+    if (speaking) {
+      this.clearTurnTimer(speaker)
+    } else {
+      this.scheduleTurnEnd(speaker)
+    }
+  }
+
   audio(speaker: Speaker, id: number, pcm: Int16Array): void {
     if (!this.running) return
     const run = this.run
-    this.pendingFinals += 1
+    this.speaking[speaker] = false
+    this.pending[speaker] += 1
     this.queue = this.queue
       .then(async () => {
         if (run !== this.run) return
@@ -125,7 +145,7 @@ class LiveSession {
           this.setStatus({ kind: 'listening', speakers: [...this.speakers] })
         }
         if (text) {
-          this.addLine(speaker, text)
+          this.appendSpeech(speaker, text)
         } else {
           this.setPartial(speaker, '')
         }
@@ -134,21 +154,22 @@ class LiveSession {
         if (run === this.run) this.setStatus({ kind: 'error', message: describeError(error) })
       })
       .finally(() => {
-        this.pendingFinals -= 1
+        if (run !== this.run) return
+        this.pending[speaker] -= 1
+        this.scheduleTurnEnd(speaker)
       })
   }
 
   partial(speaker: Speaker, id: number, pcm: Int16Array): void {
-    if (!this.running || this.partialBusy || this.pendingFinals > 0 || id <= this.finalized[speaker]) return
+    const busy = this.partialBusy || this.pending.them + this.pending.you > 0
+    if (!this.running || busy || id <= this.finalized[speaker]) return
     const run = this.run
     this.partialBusy = true
     whisperServer
       .transcribe(encodeWav(pcm))
       .then((raw) => {
         const text = cleanTranscript(raw)
-        if (run !== this.run || id <= this.finalized[speaker] || !text) return
-        this.setPartial(speaker, text)
-        if (speaker === 'them' && this.answerTimer) this.scheduleAnswer()
+        if (run === this.run && id > this.finalized[speaker] && text) this.setPartial(speaker, text)
       })
       .catch(() => undefined)
       .finally(() => {
@@ -157,17 +178,67 @@ class LiveSession {
   }
 
   ask(): void {
-    this.clearAnswerTimer()
     void this.answer(true)
   }
 
-  private addLine(speaker: Speaker, text: string): void {
-    const line: TranscriptLine = { id: randomUUID(), speaker, text, at: Date.now() }
-    this.lines = [...this.lines, line].slice(-MAX_LINES)
+  private appendSpeech(speaker: Speaker, text: string): void {
     delete this.partials[speaker]
-    sendLiveEvent({ type: 'line', line })
+    const last = this.lines.at(-1)
+    if (last?.open && last.speaker === speaker) {
+      this.replaceLine({ ...last, text: `${last.text} ${text}` })
+      return
+    }
 
-    if (speaker === 'them' && getSettings().live.autoAnswer) this.scheduleAnswer()
+    if (last?.open) this.endTurn(last.speaker)
+    const line: TranscriptLine = { id: randomUUID(), speaker, text, at: Date.now(), open: true }
+    this.lines = [...this.lines, line].slice(-MAX_LINES)
+    sendLiveEvent({ type: 'line', line })
+  }
+
+  private replaceLine(line: TranscriptLine): void {
+    this.lines = this.lines.map((existing) => (existing.id === line.id ? line : existing))
+    sendLiveEvent({ type: 'line', line })
+  }
+
+  private openLineOf(speaker: Speaker): TranscriptLine | undefined {
+    const last = this.lines.at(-1)
+    return last?.open && last.speaker === speaker ? last : undefined
+  }
+
+  private closeOpenLine(): void {
+    const last = this.lines.at(-1)
+    if (last?.open) this.replaceLine({ ...last, open: false })
+  }
+
+  private scheduleTurnEnd(speaker: Speaker): void {
+    this.clearTurnTimer(speaker)
+    if (!this.running || this.speaking[speaker] || this.pending[speaker] > 0 || !this.openLineOf(speaker)) return
+    this.turnTimers[speaker] = setTimeout(() => {
+      delete this.turnTimers[speaker]
+      this.endTurn(speaker)
+    }, TURN_GAP_MS)
+  }
+
+  private endTurn(speaker: Speaker): void {
+    this.clearTurnTimer(speaker)
+    const line = this.openLineOf(speaker)
+    if (!line) return
+    this.replaceLine({ ...line, open: false })
+    if (speaker === 'them' && getSettings().live.autoAnswer) void this.answer()
+  }
+
+  private clearTurnTimer(speaker: Speaker): void {
+    const timer = this.turnTimers[speaker]
+    if (timer) clearTimeout(timer)
+    delete this.turnTimers[speaker]
+  }
+
+  private resetTurns(): void {
+    for (const speaker of SPEAKERS) this.clearTurnTimer(speaker)
+    this.partials = {}
+    this.finalized = perSpeaker(0)
+    this.pending = perSpeaker(0)
+    this.speaking = perSpeaker(false)
   }
 
   private setPartial(speaker: Speaker, text: string): void {
@@ -179,26 +250,9 @@ class LiveSession {
     sendLiveEvent({ type: 'partial', speaker, text })
   }
 
-  private resetPartials(): void {
-    this.partials = {}
-    this.finalized = { them: 0, you: 0 }
-  }
-
-  private scheduleAnswer(): void {
-    this.clearAnswerTimer()
-    this.answerTimer = setTimeout(() => {
-      this.answerTimer = null
-      void this.answer()
-    }, ANSWER_DELAY_MS)
-  }
-
-  private clearAnswerTimer(): void {
-    if (this.answerTimer) clearTimeout(this.answerTimer)
-    this.answerTimer = null
-  }
-
-  private latestTheirLine(): TranscriptLine | undefined {
-    return [...this.lines].reverse().find((line) => line.speaker === 'them')
+  private latestTheirKey(): string | null {
+    const line = [...this.lines].reverse().find((candidate) => candidate.speaker === 'them')
+    return line ? `${line.id}:${line.text.length}` : null
   }
 
   private async answer(force = false): Promise<void> {
@@ -206,9 +260,9 @@ class LiveSession {
       this.answerAgain = true
       return
     }
-    const latest = this.latestTheirLine()
-    if (!force && (!latest || latest.id === this.answeredLineId)) return
-    this.answeredLineId = latest?.id ?? null
+    const key = this.latestTheirKey()
+    if (!force && (!key || key === this.answeredKey)) return
+    this.answeredKey = key
     this.answering = true
     const controller = new AbortController()
     this.controller = controller
@@ -217,7 +271,13 @@ class LiveSession {
     const providerId = settings.activeProvider
     const config = settings.providers[providerId]
     const apiKey = getApiKey(providerId)
-    const suggestion: Suggestion = { id: randomUUID(), question: latestQuestion(this.lines), text: '', at: Date.now(), streaming: true }
+    const suggestion: Suggestion = {
+      id: randomUUID(),
+      question: latestQuestion(this.lines),
+      text: '',
+      at: Date.now(),
+      streaming: true
+    }
     this.suggestions = [...this.suggestions, suggestion].slice(-MAX_SUGGESTIONS)
     sendLiveEvent({ type: 'suggestion', suggestion: { ...suggestion } })
 
@@ -229,6 +289,7 @@ class LiveSession {
         model: config.model,
         baseUrl: config.baseUrl,
         apiKey,
+        maxTokens: REPLY_MAX_TOKENS,
         turns: [{ role: 'user' as const, text: buildLivePrompt(settings.live.prompt, this.lines) }]
       }
       for await (const delta of streamChat(providers[providerId], request, controller.signal)) {

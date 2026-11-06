@@ -113,8 +113,8 @@ Live assist listens to a call, meeting, or interview, streams the transcript int
 
 1. Open the **Live assist** tab in the AutoDesk window. Right-click the tray icon and choose **Live assist** to jump straight to it.
 2. Click **Start**. Unsaved changes are saved, the **Live chat** window opens, and transcription begins. The first start takes a few seconds while the speech engine loads.
-3. Words appear on the right as they are spoken, then settle into a message when the speaker pauses. System audio is labeled **Them**, and your microphone is labeled **You**.
-4. Each time they finish talking, the AI reply streams in on the left, telling you what to say. Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Space</kbd> to get a reply right away.
+3. Words appear on the right as they are spoken. Everything a person says stays in one message until they stop talking for about two seconds. System audio is labeled **Them**, and your microphone is labeled **You**.
+4. When they stop talking, their whole message is sent to the AI, and the reply streams in on the left, telling you what to say. Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Space</kbd> to get a reply right away.
 5. Click **Stop** in the chat or on the Live assist tab to stop listening. Closing the chat window also stops it.
 
 Speech recognition uses [whisper.cpp](https://github.com/ggml-org/whisper.cpp) with the `base` model (about 60 MB). It is included in the installer, so there is nothing extra to download, and it runs entirely on your PC. Suggestions use the AI provider and model from Settings.
@@ -246,7 +246,7 @@ flowchart LR
 1. A hidden window captures system audio through Windows loopback and the microphone through the default input device.
 2. Each source is split into utterances on pauses, with a noise floor that adapts to steady background sound. Long speech is cut every 10 seconds so replies do not wait for the speaker to stop. While someone is talking, a snapshot of the utterance so far is transcribed about every second, which streams the words into the chat.
 3. Each utterance is sent to `whisper-server.exe` on `127.0.0.1`, started on a free port when Live assist starts and stopped when it ends.
-4. When a line from system audio arrives, AutoDesk waits a moment, and keeps waiting while they are still talking, then streams a reply from your provider using the recent transcript. A new turn that arrives during a reply is answered after it finishes.
+4. Utterances from the same person are joined into one message while they keep talking. When no speech is heard for 1.5 seconds after the last utterance, the turn ends and AutoDesk streams a reply from your provider using the recent transcript. Replies are capped at 1,024 tokens and the transcript sent is trimmed to the most recent part, so requests stay within small rate limits. A new turn that arrives during a reply is answered after it finishes.
 
 </details>
 
@@ -312,6 +312,7 @@ The Release workflow sets the app version from the tag, runs the checks, builds 
 | Live assist says the speech engine is missing | Run `npm run fetch:speech` (development only; the installer already includes it). |
 | Live assist hears nothing from a call | Make sure the call audio plays through the default output device, and that system audio is turned on in Settings. |
 | Your own words appear as **Them** | Your microphone hears your speakers. Use headphones, or turn off one of the sources in Settings. |
+| Live chat shows `413 Payload Too Large` or a rate limit error | Your provider's free tier allows very few tokens per minute for that model. Pick a model with a higher limit, such as `llama-3.1-8b-instant` on Groq, or upgrade the plan. |
 | The model list says it could not load models | Check the API key and base URL. For Ollama and LM Studio, make sure the app is running and its local server is started. The model dropdown stays empty until the list loads. |
 
 ## Third-party software

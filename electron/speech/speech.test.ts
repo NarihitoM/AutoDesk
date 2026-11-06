@@ -3,7 +3,7 @@ import { buildLivePrompt, formatTranscript, latestQuestion } from '../live/liveP
 import { cleanTranscript } from './transcript'
 import { encodeWav } from './wav'
 
-const line = (speaker: 'them' | 'you', text: string, id = text) => ({ id, speaker, text, at: 0 })
+const line = (speaker: 'them' | 'you', text: string, id = text) => ({ id, speaker, text, at: 0, open: false })
 
 describe('cleanTranscript', () => {
   it('removes noise tags and keeps real speech', () => {
@@ -28,6 +28,13 @@ describe('live prompt', () => {
     const transcript = formatTranscript(many, 200)
     expect(transcript.length).toBeLessThanOrEqual(240)
     expect(transcript.endsWith('Line number 49 with some words')).toBe(true)
+  })
+
+  it('trims one very long turn to its most recent words', () => {
+    const transcript = formatTranscript([line('them', `start ${'word '.repeat(400)}end`)], 300)
+    expect(transcript.length).toBeLessThanOrEqual(320)
+    expect(transcript.startsWith('Them: ...')).toBe(true)
+    expect(transcript.endsWith('end')).toBe(true)
   })
 
   it('builds a prompt with instructions, transcript, and the question', () => {

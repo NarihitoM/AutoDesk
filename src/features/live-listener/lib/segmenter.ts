@@ -11,6 +11,8 @@ export interface SegmenterOptions {
 export interface SegmenterHandlers {
   onUtterance(samples: Float32Array, id: number): void
   onPartial?(samples: Float32Array, id: number): void
+  onSpeechStart?(id: number): void
+  onDiscard?(id: number): void
 }
 
 export const DEFAULT_SEGMENTER_OPTIONS: SegmenterOptions = {
@@ -114,6 +116,7 @@ export class UtteranceSegmenter {
       this.speechMs = this.options.frameMs
       this.silenceMs = 0
       this.lastPartialMs = 0
+      this.handlers.onSpeechStart?.(this.utteranceId)
       return
     }
 
@@ -139,7 +142,11 @@ export class UtteranceSegmenter {
   }
 
   private emit(): void {
-    if (this.speechMs >= this.options.minSpeechMs) this.handlers.onUtterance(concat(this.chunks), this.utteranceId)
+    if (this.speechMs >= this.options.minSpeechMs) {
+      this.handlers.onUtterance(concat(this.chunks), this.utteranceId)
+    } else {
+      this.handlers.onDiscard?.(this.utteranceId)
+    }
     this.speaking = false
     this.chunks = []
     this.speechMs = 0

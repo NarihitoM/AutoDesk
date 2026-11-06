@@ -15,11 +15,9 @@ export const geminiProvider: VisionProvider = {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     if (request.apiKey) headers['x-goog-api-key'] = request.apiKey
     const path = `v1beta/models/${encodeURIComponent(request.model)}:streamGenerateContent?alt=sse`
-    return {
-      url: joinUrl(request.baseUrl, path),
-      headers,
-      body: { contents: request.turns.map(toContent) }
-    }
+    const body: Record<string, unknown> = { contents: request.turns.map(toContent) }
+    if (request.maxTokens) body.generationConfig = { maxOutputTokens: request.maxTokens }
+    return { url: joinUrl(request.baseUrl, path), headers, body }
   },
 
   readDelta(data) {

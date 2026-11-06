@@ -76,6 +76,7 @@ export interface AutoDeskApi {
     onCommand(listener: (command: ListenerCommand) => void): Unsubscribe
     sendAudio(speaker: Speaker, id: number, pcm: ArrayBuffer): void
     sendPartial(speaker: Speaker, id: number, pcm: ArrayBuffer): void
+    sendActivity(speaker: Speaker, speaking: boolean): void
     reportStatus(status: ListenerStatus): void
   }
 }

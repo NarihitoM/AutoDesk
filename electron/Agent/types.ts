@@ -16,6 +16,7 @@ export interface ChatRequest {
   baseUrl: string
   apiKey: string | null
   turns: ChatTurn[]
+  maxTokens?: number
 }
 
 export interface HttpRequest {

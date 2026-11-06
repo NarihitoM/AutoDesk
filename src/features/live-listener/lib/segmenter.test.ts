@@ -27,14 +27,17 @@ function collect() {
   const utterances: Float32Array[] = []
   const ids: number[] = []
   const partials: { id: number; length: number }[] = []
+  const events: string[] = []
   const segmenter = new UtteranceSegmenter({
     onUtterance: (samples, id) => {
       utterances.push(samples)
       ids.push(id)
     },
-    onPartial: (samples, id) => partials.push({ id, length: samples.length })
+    onPartial: (samples, id) => partials.push({ id, length: samples.length }),
+    onSpeechStart: (id) => events.push(`start:${id}`),
+    onDiscard: (id) => events.push(`discard:${id}`)
   })
-  return { segmenter, utterances, ids, partials }
+  return { segmenter, utterances, ids, partials, events }
 }
 
 describe('UtteranceSegmenter', () => {
@@ -57,10 +60,11 @@ describe('UtteranceSegmenter', () => {
   })
 
   it('drops clicks that are too short to be speech', () => {
-    const { segmenter, utterances } = collect()
+    const { segmenter, utterances, events } = collect()
     segmenter.push(speech(90, 0.5))
     segmenter.push(new Float32Array(RATE))
     expect(utterances).toHaveLength(0)
+    expect(events).toEqual(['start:1', 'discard:1'])
   })
 
   it('learns steady background noise and still hears speech over it', () => {

@@ -27,5 +27,6 @@ export const Channels = {
   listenerCommand: 'listener:command',
   listenerAudio: 'listener:audio',
   listenerPartial: 'listener:partial',
+  listenerActivity: 'listener:activity',
   listenerStatus: 'listener:status'
 } as const

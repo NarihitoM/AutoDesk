@@ -5,6 +5,7 @@ export interface TranscriptLine {
   speaker: Speaker
   text: string
   at: number
+  open: boolean
 }
 
 export interface Suggestion {

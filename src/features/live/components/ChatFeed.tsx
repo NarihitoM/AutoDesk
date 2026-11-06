@@ -30,23 +30,25 @@ function buildItems(lines: readonly TranscriptLine[], replies: readonly Suggesti
 interface SpeechBubbleProps {
   speaker: Speaker
   text: string
-  live?: boolean
+  pending?: string
 }
 
-function SpeechBubble({ speaker, text, live = false }: SpeechBubbleProps) {
+function SpeechBubble({ speaker, text, pending }: SpeechBubbleProps) {
   const style = SPEAKER_STYLES[speaker]
   return (
     <li className="flex flex-col items-end gap-1">
       <span className={`px-1 text-[11px] font-semibold tracking-[0.04em] uppercase ${style.labelClass}`}>
         {style.label}
       </span>
-      <p
-        className={`max-w-[85%] rounded-card rounded-br-sm px-3 py-2 text-[13.5px] leading-snug ${style.bubbleClass} ${
-          live ? 'opacity-70' : ''
-        }`}
-      >
+      <p className={`max-w-[85%] rounded-card rounded-br-sm px-3 py-2 text-[13.5px] leading-snug ${style.bubbleClass}`}>
         {text}
-        {live && <span className="ml-0.5 inline-block h-[1em] w-[2px] translate-y-[2px] animate-pulse bg-current" />}
+        {pending && (
+          <>
+            {text && ' '}
+            <span className="opacity-65">{pending}</span>
+            <span className="ml-0.5 inline-block h-[1em] w-[2px] translate-y-[2px] animate-pulse bg-current" />
+          </>
+        )}
       </p>
     </li>
   )
@@ -58,11 +60,13 @@ export function ChatFeed({ lines, partials, suggestions, listening }: ChatFeedPr
   const items = buildItems(lines, suggestions)
   const liveText = SPEAKERS.map((speaker) => partials[speaker] ?? '').join('')
   const latestReply = suggestions.at(-1)?.text.length ?? 0
+  const lastLine = lines.at(-1)
+  const merged = lastLine?.open && partials[lastLine.speaker] ? lastLine : undefined
 
   useEffect(() => {
     const element = scrollRef.current
     if (element && stickRef.current) element.scrollTop = element.scrollHeight
-  }, [items.length, latestReply, liveText])
+  }, [items.length, latestReply, liveText, lastLine?.text])
 
   const onScroll = (): void => {
     const element = scrollRef.current
@@ -84,14 +88,19 @@ export function ChatFeed({ lines, partials, suggestions, listening }: ChatFeedPr
         <ol className="flex flex-col gap-3">
           {items.map((item) =>
             item.kind === 'line' ? (
-              <SpeechBubble key={item.line.id} speaker={item.line.speaker} text={item.line.text} />
+              <SpeechBubble
+                key={item.line.id}
+                speaker={item.line.speaker}
+                text={item.line.text}
+                pending={item.line === merged ? partials[item.line.speaker] : undefined}
+              />
             ) : (
               <AiReply key={item.reply.id} reply={item.reply} />
             )
           )}
           {SPEAKERS.map((speaker) => {
-            const text = partials[speaker]
-            return text ? <SpeechBubble key={`live-${speaker}`} speaker={speaker} text={text} live /> : null
+            const text = merged?.speaker === speaker ? undefined : partials[speaker]
+            return text ? <SpeechBubble key={`live-${speaker}`} speaker={speaker} text="" pending={text} /> : null
           })}
         </ol>
       )}

@@ -92,6 +92,12 @@ export function registerLiveIpc(): void {
     if (speaker && id && pcm) liveSession.partial(speaker, id, pcm)
   })
 
+  ipcMain.on(Channels.listenerActivity, (event, rawSpeaker: unknown, speaking: unknown) => {
+    if (!isListenerSender(event.sender)) return
+    const speaker = asSpeaker(rawSpeaker)
+    if (speaker && typeof speaking === 'boolean') liveSession.activity(speaker, speaking)
+  })
+
   ipcMain.on(Channels.listenerStatus, (event, raw: unknown) => {
     if (!isListenerSender(event.sender)) return
     const status = asListenerStatus(raw)

@@ -25,6 +25,8 @@ function usesServerFallback(request: ChatRequest): boolean {
   return new URL(request.baseUrl).host === FIRST_PARTY_HOST
 }
 
+const DEFAULT_MAX_TOKENS = 64000
+
 export const anthropicProvider: VisionProvider = {
   buildRequest(request) {
     const headers: Record<string, string> = {
@@ -35,7 +37,7 @@ export const anthropicProvider: VisionProvider = {
 
     const body: Record<string, unknown> = {
       model: request.model,
-      max_tokens: 64000,
+      max_tokens: request.maxTokens ?? DEFAULT_MAX_TOKENS,
       stream: true,
       messages: request.turns.map(toMessage)
     }

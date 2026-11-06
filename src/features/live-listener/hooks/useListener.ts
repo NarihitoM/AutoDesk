@@ -20,7 +20,9 @@ async function openSource(speaker: Speaker): Promise<ActiveSource> {
   const stream = speaker === 'them' ? await openSystemAudio() : await openMicrophone()
   const segmenter = new UtteranceSegmenter({
     onUtterance: (samples, id) => bridge.listener.sendAudio(speaker, id, toInt16(samples).buffer),
-    onPartial: (samples, id) => bridge.listener.sendPartial(speaker, id, toInt16(samples).buffer)
+    onPartial: (samples, id) => bridge.listener.sendPartial(speaker, id, toInt16(samples).buffer),
+    onSpeechStart: () => bridge.listener.sendActivity(speaker, true),
+    onDiscard: () => bridge.listener.sendActivity(speaker, false)
   })
   const capture = await startCapture(stream, (samples) => segmenter.push(samples))
   return { capture, segmenter }
