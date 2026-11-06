@@ -1,3 +1,5 @@
+@import 'tailwindcss';
+
 :root {
   --surface: #14151b;
   --surface-raised: #1c1d25;
@@ -17,10 +19,6 @@
   --on-accent: #ffffff;
   --chip: rgba(20, 21, 27, 0.92);
   --shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
-  --radius: 10px;
-  --radius-small: 7px;
-  --font: 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
-  --font-mono: 'Cascadia Code', Consolas, monospace;
   color-scheme: dark;
 }
 
@@ -47,37 +45,154 @@
   }
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+@theme inline {
+  --color-surface: var(--surface);
+  --color-raised: var(--surface-raised);
+  --color-sunken: var(--surface-sunken);
+  --color-hover: var(--surface-hover);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-fg: var(--text);
+  --color-muted: var(--text-muted);
+  --color-faint: var(--text-faint);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-soft: var(--accent-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-success: var(--success);
+  --color-on-accent: var(--on-accent);
+  --color-chip: var(--chip);
+  --shadow-panel: var(--shadow);
 }
 
-html,
-body,
-#root {
-  margin: 0;
-  height: 100%;
-  background: transparent;
-  color: var(--text);
-  font-family: var(--font);
-  font-size: 14px;
-  -webkit-font-smoothing: antialiased;
+@theme {
+  --font-sans: 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'Cascadia Code', Consolas, monospace;
+  --radius-control: 7px;
+  --radius-card: 10px;
+  --animate-dot: dot 1.2s ease-in-out infinite;
+
+  @keyframes dot {
+    0%,
+    80%,
+    100% {
+      opacity: 0.25;
+      transform: translateY(0);
+    }
+    40% {
+      opacity: 1;
+      transform: translateY(-2px);
+    }
+  }
 }
 
-button,
-input,
-textarea,
-select {
-  font: inherit;
-  color: inherit;
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+    background: transparent;
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+  }
 }
 
-button {
-  cursor: pointer;
-}
+@layer components {
+  .markdown {
+    line-height: 1.6;
+    overflow-wrap: anywhere;
 
-:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
+    & p,
+    & ul,
+    & ol,
+    & blockquote {
+      margin: 0 0 10px;
+    }
+
+    & ul,
+    & ol {
+      padding-left: 22px;
+    }
+
+    & ul {
+      list-style: disc;
+    }
+
+    & ol {
+      list-style: decimal;
+    }
+
+    & li + li {
+      margin-top: 3px;
+    }
+
+    & h1,
+    & h2,
+    & h3,
+    & h4 {
+      margin: 16px 0 8px;
+      font-size: 14.5px;
+      font-weight: 600;
+    }
+
+    & a {
+      color: var(--color-accent);
+      text-decoration: underline;
+    }
+
+    & strong {
+      font-weight: 600;
+    }
+
+    & code {
+      padding: 1px 5px;
+      border-radius: 5px;
+      background: var(--color-raised);
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+    }
+
+    & pre {
+      margin: 0 0 12px;
+      padding: 10px 12px;
+      overflow-x: auto;
+      border: 1px solid var(--color-line);
+      border-radius: var(--radius-control);
+      background: var(--color-sunken);
+    }
+
+    & pre code {
+      padding: 0;
+      background: none;
+    }
+
+    & blockquote {
+      padding-left: 12px;
+      border-left: 3px solid var(--color-line-strong);
+      color: var(--color-muted);
+    }
+
+    & table {
+      margin-bottom: 12px;
+      border-collapse: collapse;
+    }
+
+    & th,
+    & td {
+      padding: 5px 9px;
+      border: 1px solid var(--color-line);
+    }
+  }
 }

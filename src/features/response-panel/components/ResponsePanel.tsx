@@ -5,9 +5,9 @@ import { usePanelEvents } from '../hooks/usePanelEvents'
 import { usePanelStore } from '../store/panelStore'
 import { Composer } from './Composer'
 import { MessageItem } from './MessageItem'
-import styles from './ResponsePanel.module.css'
 
 const COPIED_RESET_MS = 1500
+const GHOST_BUTTON = 'h-7 rounded-control px-2.5 text-[12.5px] text-muted hover:enabled:bg-hover hover:enabled:text-fg disabled:opacity-40'
 
 export function ResponsePanel() {
   usePanelEvents()
@@ -43,26 +43,28 @@ export function ResponsePanel() {
   }
 
   return (
-    <div className={styles.panel}>
-      <header className={styles.header}>
-        <div className={styles.title}>
-          <span className={styles.brand}>AutoDesk</span>
-          {state && <span className={styles.model}>{state.model}</span>}
+    <div className="flex h-full flex-col border border-line bg-surface">
+      <header className="flex h-11 items-center justify-between gap-3 border-b border-line pr-2 pl-3.5 [-webkit-app-region:drag]">
+        <div className="flex min-w-0 items-baseline gap-2.5">
+          <span className="font-semibold tracking-[0.01em]">AutoDesk</span>
+          {state && <span className="truncate text-xs text-faint">{state.model}</span>}
         </div>
-        <div className={styles.actions}>
-          <button type="button" className={styles.ghostButton} onClick={copyAnswer} disabled={!lastAnswer}>
+        <div className="flex gap-0.5 [-webkit-app-region:no-drag]">
+          <button type="button" className={GHOST_BUTTON} onClick={copyAnswer} disabled={!lastAnswer}>
             {copied ? 'Copied' : 'Copy'}
           </button>
-          <button type="button" className={styles.ghostButton} onClick={bridge.panel.close} aria-label="Close">
+          <button type="button" className={GHOST_BUTTON} onClick={bridge.panel.close} aria-label="Close">
             Close
           </button>
         </div>
       </header>
 
-      <div className={styles.body} ref={scrollRef}>
+      <div className="flex-1 overflow-y-auto px-4 pt-3.5 pb-[18px]" ref={scrollRef}>
         {state ? (
           <>
-            <img className={styles.capture} src={state.image} alt="Captured area" />
+            <img
+              className="mb-3.5 block max-h-[140px] max-w-full rounded-control border border-line bg-sunken object-contain"
+              src={state.image} alt="Captured area" />
             {state.messages.map((message) => (
               <MessageItem
                 key={message.id}
@@ -72,8 +74,8 @@ export function ResponsePanel() {
             ))}
           </>
         ) : (
-          <div className={styles.empty}>
-            <img className={styles.emptyBanner} src={banner} alt="AutoDesk" />
+          <div className="mx-3 my-8 text-center leading-relaxed text-muted">
+            <img className="mx-auto mb-3 block h-auto w-full max-w-[280px]" src={banner} alt="AutoDesk" />
             <p>Hold the capture key and drag over your screen to ask about it.</p>
           </div>
         )}

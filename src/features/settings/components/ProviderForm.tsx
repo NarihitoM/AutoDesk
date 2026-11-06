@@ -1,7 +1,7 @@
 import { KEY_REQUIRED, KEY_URLS, PROVIDER_LABELS, USES_KEY } from '@/shared/lib/providers'
 import type { ProviderConfig, ProviderId } from '@/shared/types/settings'
 import { ModelPicker } from './ModelPicker'
-import styles from './Settings.module.css'
+import { styles } from './settingsClasses'
 
 interface ProviderFormProps {
   id: ProviderId
@@ -39,7 +39,7 @@ export function ProviderForm(props: ProviderFormProps) {
           <span className={styles.label}>{KEY_REQUIRED[id] ? 'API key' : 'API key (optional)'}</span>
           <div className={styles.inline}>
             <input
-              className={styles.input}
+              className={`${styles.input} flex-1`}
               type="password"
               autoComplete="off"
               value={keyDraft}

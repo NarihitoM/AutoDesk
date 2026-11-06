@@ -1,6 +1,7 @@
 import { resolve } from 'node:path'
 import { defineConfig } from 'electron-vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 
 const alias = { '@': resolve(__dirname, 'src') }
 
@@ -25,7 +26,7 @@ export default defineConfig({
     root: '.',
     publicDir: false,
     resolve: { alias },
-    plugins: [react()],
+    plugins: [react(), tailwindcss()],
     build: {
       rolldownOptions: {
         input: resolve(__dirname, 'index.html')

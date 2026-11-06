@@ -1,7 +1,7 @@
 import banner from '@/shared/assets/autodesk-banner.png'
 import { useSettings } from '../hooks/useSettings'
 import { SettingsForm } from './SettingsForm'
-import styles from './Settings.module.css'
+import { styles } from './settingsClasses'
 
 export function SettingsView() {
   const { view, loadError, status, save } = useSettings()

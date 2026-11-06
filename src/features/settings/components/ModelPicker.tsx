@@ -4,7 +4,7 @@ import type { ModelOption } from '@/shared/types/models'
 import type { ProviderId } from '@/shared/types/settings'
 import { useModelList, type ModelListState } from '../hooks/useModelList'
 import { ModelDropdown } from './ModelDropdown'
-import styles from './Settings.module.css'
+import { styles } from './settingsClasses'
 
 interface ModelPickerProps {
   provider: ProviderId

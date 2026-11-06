@@ -21,7 +21,7 @@ import type {
 import type { SaveStatus } from '../hooks/useSettings'
 import { ProviderForm } from './ProviderForm'
 import { ProviderLogo } from './ProviderLogo'
-import styles from './Settings.module.css'
+import { styles } from './settingsClasses'
 
 interface SettingsFormProps {
   view: SettingsView
@@ -185,7 +185,7 @@ export function SettingsForm({ view, status, onSave }: SettingsFormProps) {
         <label className={styles.field}>
           <span className={styles.label}>Prompt sent with every capture</span>
           <textarea
-            className={`${styles.input} ${styles.textarea}`}
+            className={styles.textarea}
             value={draft.prompt}
             rows={4}
             onChange={(event) => update('prompt', event.target.value)}

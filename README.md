@@ -176,7 +176,7 @@ npm run typecheck    # TypeScript checks
 npm run dist         # build the installer into dist/
 ```
 
-**Tech stack:** Electron, React, TypeScript, Vite (electron-vite), Zustand, `uiohook-napi` to detect the capture key globally, and `koffi` for the Windows mouse hook behind right-drag capture.
+**Tech stack:** Electron, React, TypeScript, Vite (electron-vite), Tailwind CSS, Zustand, `uiohook-napi` to detect the capture key globally, and `koffi` for the Windows mouse hook behind right-drag capture.
 
 <details>
 <summary><b>How capture works</b></summary>

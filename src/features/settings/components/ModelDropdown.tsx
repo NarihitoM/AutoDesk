@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import type { ImageSupport, ModelOption } from '@/shared/types/models'
-import styles from './Settings.module.css'
+import { styles } from './settingsClasses'
 
 const TYPE_AHEAD_RESET_MS = 700
 
