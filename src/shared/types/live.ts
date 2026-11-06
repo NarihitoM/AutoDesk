@@ -11,6 +11,7 @@ export interface Suggestion {
   id: string
   question: string
   text: string
+  at: number
   streaming: boolean
   error?: string
 }

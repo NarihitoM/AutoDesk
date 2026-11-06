@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 import { Channels } from '@/shared/lib/channels'
-import type { AutoDeskApi, PanelEvent, SelectionRect, Unsubscribe } from '@/shared/types/ipc'
+import type { AppTab, AutoDeskApi, PanelEvent, SelectionRect, Unsubscribe } from '@/shared/types/ipc'
 import type { ListenerCommand, ListenerStatus, LiveEvent, Speaker } from '@/shared/types/live'
 import type { ModelListRequest, ModelListResponse } from '@/shared/types/models'
 import type { SettingsUpdate, SettingsView } from '@/shared/types/settings'
@@ -36,6 +36,7 @@ const api: AutoDeskApi = {
     openDataFolder: () => ipcRenderer.send(Channels.openDataFolder),
     setDirty: (dirty: boolean) => ipcRenderer.send(Channels.settingsDirty, dirty),
     onSaveRequest: (listener) => listen<void>(Channels.settingsSaveRequest, listener),
+    onShowTab: (listener) => listen<AppTab>(Channels.settingsShowTab, listener),
     close: () => ipcRenderer.send(Channels.settingsClose)
   },
   live: {
@@ -44,7 +45,8 @@ const api: AutoDeskApi = {
     start: () => ipcRenderer.send(Channels.liveStart),
     stop: () => ipcRenderer.send(Channels.liveStop),
     ask: () => ipcRenderer.send(Channels.liveAsk),
-    close: () => ipcRenderer.send(Channels.liveClose)
+    close: () => ipcRenderer.send(Channels.liveClose),
+    launch: () => ipcRenderer.send(Channels.liveLaunch)
   },
   listener: {
     onCommand: (listener) => listen<ListenerCommand>(Channels.listenerCommand, listener),

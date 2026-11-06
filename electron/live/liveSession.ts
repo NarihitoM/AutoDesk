@@ -142,7 +142,7 @@ class LiveSession {
     const providerId = settings.activeProvider
     const config = settings.providers[providerId]
     const apiKey = getApiKey(providerId)
-    const suggestion: Suggestion = { id: randomUUID(), question: latestQuestion(this.lines), text: '', streaming: true }
+    const suggestion: Suggestion = { id: randomUUID(), question: latestQuestion(this.lines), text: '', at: Date.now(), streaming: true }
     this.suggestions = [...this.suggestions, suggestion].slice(-MAX_SUGGESTIONS)
     sendLiveEvent({ type: 'suggestion', suggestion: { ...suggestion } })
 

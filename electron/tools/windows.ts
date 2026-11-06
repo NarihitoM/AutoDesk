@@ -12,7 +12,7 @@ import {
   type WebPreferences
 } from 'electron'
 import { Channels } from '@/shared/lib/channels'
-import type { PanelEvent, SelectionRect } from '@/shared/types/ipc'
+import type { AppTab, PanelEvent, SelectionRect } from '@/shared/types/ipc'
 import type { ListenerCommand, LiveEvent } from '@/shared/types/live'
 import type { ThemeMode } from '@/shared/types/settings'
 import { APP_WINDOW_ICON_PATH, PRELOAD_PATH, RENDERER_HTML_PATH } from '../lib/paths'
@@ -46,12 +46,13 @@ function webPreferences(extra: WebPreferences = {}): WebPreferences {
   }
 }
 
-function loadRoute(window: BrowserWindow, route: Route): void {
+function loadRoute(window: BrowserWindow, route: Route, section?: string): void {
+  const hash = section ? `${route}/${section}` : route
   const devUrl = process.env.ELECTRON_RENDERER_URL
   if (devUrl) {
-    void window.loadURL(`${devUrl}#${route}`)
+    void window.loadURL(`${devUrl}#${hash}`)
   } else {
-    void window.loadFile(RENDERER_HTML_PATH, { hash: route })
+    void window.loadFile(RENDERER_HTML_PATH, { hash })
   }
 }
 
@@ -210,11 +211,12 @@ export function sendPanelEvent(event: PanelEvent): void {
   panel?.webContents.send(Channels.panelEvent, event)
 }
 
-export function openSettingsWindow(): void {
+export function openSettingsWindow(tab: AppTab = 'settings'): void {
   if (settings) {
     if (settings.isMinimized()) settings.restore()
     settings.show()
     settings.focus()
+    settings.webContents.send(Channels.settingsShowTab, tab)
     return
   }
 
@@ -224,7 +226,7 @@ export function openSettingsWindow(): void {
     minWidth: 480,
     minHeight: 520,
     show: false,
-    title: 'AutoDesk Settings',
+    title: 'AutoDesk',
     icon: APP_WINDOW_ICON_PATH,
     autoHideMenuBar: true,
     backgroundColor: surfaceColor(),
@@ -243,7 +245,7 @@ export function openSettingsWindow(): void {
     settings = null
     settingsDirty = false
   })
-  loadRoute(settings, 'settings')
+  loadRoute(settings, 'settings', tab)
 }
 
 function confirmSettingsClose(window: BrowserWindow): void {
@@ -317,6 +319,7 @@ export function isLiveSender(sender: WebContents): boolean {
 
 export function sendLiveEvent(event: LiveEvent): void {
   live?.webContents.send(Channels.liveEvent, event)
+  if (event.type === 'status') settings?.webContents.send(Channels.liveEvent, event)
 }
 
 function prepareListenerSession(): Electron.Session {

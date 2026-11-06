@@ -16,7 +16,6 @@ import {
   hideOverlay,
   applyTheme,
   markQuitting,
-  openLiveWindow,
   openSettingsWindow,
   restorePanel,
   showOverlay,
@@ -64,8 +63,8 @@ async function bootstrap(): Promise<void> {
       trigger.reset()
       syncMouseHook()
     },
-    onSettings: openSettingsWindow,
-    onLive: () => openLiveWindow(() => liveSession.stop()),
+    onSettings: () => openSettingsWindow(),
+    onLive: () => openSettingsWindow('live'),
     onQuit: () => app.quit()
   })
   onSettingsChanged((settings) => {
@@ -83,7 +82,7 @@ async function bootstrap(): Promise<void> {
 if (!app.requestSingleInstanceLock()) {
   app.quit()
 } else {
-  app.on('second-instance', openSettingsWindow)
+  app.on('second-instance', () => openSettingsWindow())
   app.on('before-quit', () => {
     markQuitting()
     liveSession.stop()

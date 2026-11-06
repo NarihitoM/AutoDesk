@@ -6,8 +6,9 @@ export const styles = {
   page: 'min-h-full bg-surface px-8 pt-7',
   pageHeader: 'mb-[22px]',
   banner: 'mx-auto mb-5 block h-auto w-full max-w-[360px] rounded-card',
-  pageTitle: 'mb-1 text-[22px] font-semibold',
   pageSubtitle: 'text-muted',
+  tabs: 'mb-3 grid grid-cols-2 gap-1 rounded-card border border-line bg-sunken p-1',
+  tab: 'h-10 rounded-control text-[14px] font-semibold text-muted transition-colors hover:text-fg data-[active=true]:bg-raised data-[active=true]:text-fg data-[active=true]:shadow-[0_0_0_1px_var(--color-line-strong)]',
   loadError: 'rounded-control bg-danger-soft px-3 py-2.5 text-danger',
 
   form: 'flex flex-col gap-4',

@@ -36,6 +36,8 @@ export type PanelEvent =
 
 export type Unsubscribe = () => void
 
+export type AppTab = 'settings' | 'live'
+
 export interface AutoDeskApi {
   overlay: {
     onReset(listener: () => void): Unsubscribe
@@ -58,6 +60,7 @@ export interface AutoDeskApi {
     openDataFolder(): void
     setDirty(dirty: boolean): void
     onSaveRequest(listener: () => void): Unsubscribe
+    onShowTab(listener: (tab: AppTab) => void): Unsubscribe
     close(): void
   }
   live: {
@@ -67,6 +70,7 @@ export interface AutoDeskApi {
     stop(): void
     ask(): void
     close(): void
+    launch(): void
   }
   listener: {
     onCommand(listener: (command: ListenerCommand) => void): Unsubscribe

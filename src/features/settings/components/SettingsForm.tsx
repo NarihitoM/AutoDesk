@@ -18,13 +18,16 @@ import type {
   SettingsUpdate,
   SettingsView
 } from '@/shared/types/settings'
+import type { AppTab } from '@/shared/types/ipc'
 import type { SaveStatus } from '../hooks/useSettings'
+import { LiveLauncher } from './LiveLauncher'
 import { LiveSettingsSection } from './LiveSettingsSection'
 import { ProviderForm } from './ProviderForm'
 import { ProviderLogo } from './ProviderLogo'
 import { styles } from './settingsClasses'
 
 interface SettingsFormProps {
+  tab: AppTab
   view: SettingsView
   status: SaveStatus
   onSave(update: SettingsUpdate): Promise<SettingsView | null>
@@ -60,10 +63,11 @@ function statusText(status: SaveStatus): string {
   return ''
 }
 
-export function SettingsForm({ view, status, onSave }: SettingsFormProps) {
+export function SettingsForm({ tab, view, status, onSave }: SettingsFormProps) {
   const [draft, setDraft] = useState<Settings>(view.settings)
   const [keyDrafts, setKeyDrafts] = useState<KeyDrafts>({})
   const [clearedKeys, setClearedKeys] = useState<ReadonlySet<ProviderId>>(new Set())
+  const [launching, setLaunching] = useState(false)
 
   const active = draft.activeProvider
   const keyChanges = buildKeyChanges(keyDrafts, clearedKeys)
@@ -120,6 +124,15 @@ export function SettingsForm({ view, status, onSave }: SettingsFormProps) {
     []
   )
 
+  const startLive = (): void => {
+    setLaunching(true)
+    void saveChanges()
+      .then((saved) => {
+        if (saved) bridge.live.launch()
+      })
+      .finally(() => setLaunching(false))
+  }
+
   const onSubmit = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault()
     void saveChanges()
@@ -127,7 +140,14 @@ export function SettingsForm({ view, status, onSave }: SettingsFormProps) {
 
   return (
     <form className={styles.form} onSubmit={onSubmit}>
-      <section className={styles.section}>
+      {tab === 'live' && (
+        <>
+          <LiveLauncher starting={launching || status.kind === 'saving'} onStart={startLive} />
+          <LiveSettingsSection value={draft.live} onChange={(live) => update('live', live)} />
+        </>
+      )}
+
+      <section className={styles.section} hidden={tab !== 'settings'}>
         <h2 className={styles.sectionTitle}>AI provider</h2>
         <div className={styles.segmented} role="radiogroup" aria-label="AI provider">
           {PROVIDER_IDS.map((id) => (
@@ -162,7 +182,7 @@ export function SettingsForm({ view, status, onSave }: SettingsFormProps) {
         />
       </section>
 
-      <section className={styles.section}>
+      <section className={styles.section} hidden={tab !== 'settings'}>
         <h2 className={styles.sectionTitle}>Capture</h2>
         <label className={styles.field}>
           <span className={styles.label}>Capture key</span>
@@ -194,9 +214,7 @@ export function SettingsForm({ view, status, onSave }: SettingsFormProps) {
         </label>
       </section>
 
-      <LiveSettingsSection value={draft.live} onChange={(live) => update('live', live)} />
-
-      <section className={styles.section}>
+      <section className={styles.section} hidden={tab !== 'settings'}>
         <h2 className={styles.sectionTitle}>General</h2>
         <div className={styles.field}>
           <span className={styles.label}>Appearance</span>

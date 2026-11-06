@@ -12,11 +12,7 @@ export function LiveSettingsSection({ value, onChange }: LiveSettingsSectionProp
 
   return (
     <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>Live assist</h2>
-      <p className={styles.hint}>
-        Transcribes a call or meeting on this PC with a built-in speech model, and suggests replies with the AI provider
-        above. Audio never leaves your PC; only the transcript text is sent to the AI. Open it from the tray menu.
-      </p>
+      <h2 className={styles.sectionTitle}>Options</h2>
 
       <label className={styles.field}>
         <span className={styles.label}>Spoken language</span>

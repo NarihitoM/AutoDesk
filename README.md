@@ -111,10 +111,11 @@ Hold the **right mouse button**, drag over part of your screen, and let go. The 
 
 Live assist listens to a call, meeting, or interview, writes a running transcript, and suggests replies.
 
-1. Right-click the tray icon and choose **Live assist**.
-2. Click **Start**. The first start takes a few seconds while the speech engine loads.
-3. The transcript fills in as people speak. Lines from system audio are labeled **Them**, and lines from your microphone are labeled **Me**.
-4. When they ask a question, a suggested reply streams in at the top. Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Space</kbd> or click **Ask AI** at any time to get a suggestion for the conversation so far.
+1. Open the **Live assist** tab in the AutoDesk window. Right-click the tray icon and choose **Live assist** to jump straight to it.
+2. Click **Start**. Unsaved changes are saved, the **Live chat** window opens, and transcription begins. The first start takes a few seconds while the speech engine loads.
+3. The chat fills in as people speak. What the other person says (system audio) appears on the left as **Them**, and what you say (microphone) appears on the right as **You**.
+4. When they ask a question, an AI suggestion streams into the chat. Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Space</kbd> or click **Ask AI** at any time to get a suggestion for the conversation so far.
+5. Click **Stop** in the chat or on the Live assist tab to stop listening. Closing the chat window also stops it.
 
 Speech recognition uses [whisper.cpp](https://github.com/ggml-org/whisper.cpp) with the `base` model (about 60 MB). It is included in the installer, so there is nothing extra to download, and it runs entirely on your PC. Suggestions use the AI provider and model from Settings.
 
@@ -133,8 +134,9 @@ Speech recognition uses [whisper.cpp](https://github.com/ggml-org/whisper.cpp) w
 | Capture key | Right mouse button (default), or hold <kbd>Alt</kbd>, <kbd>Ctrl</kbd>, or <kbd>Shift</kbd> and left-drag |
 | Prompt | The instruction sent with every capture |
 | Appearance | Match Windows, Light, or Dark |
-| Live assist | Spoken language, whether to listen to system audio and the microphone, automatic suggestions, and the instructions for suggestions |
 | Start with Windows | Launch AutoDesk when you sign in |
+
+The **Live assist** tab has its own options: spoken language, whether to listen to system audio and the microphone, automatic suggestions, and the instructions for suggestions.
 
 <details>
 <summary><b>Default endpoints</b></summary>
@@ -237,7 +239,7 @@ flowchart LR
     A[System audio<br/>and microphone] --> B[Hidden listener window<br/>16 kHz audio]
     B --> C[Split into utterances<br/>on pauses]
     C --> D[Local whisper-server<br/>transcribes]
-    D --> E[Transcript in the<br/>Live assist window]
+    D --> E[Transcript in the<br/>Live chat window]
     E --> F[Question or hotkey<br/>asks the AI]
 ```
 
@@ -266,8 +268,8 @@ src/
   features/
     capture-overlay/ the selection overlay
     response-panel/  the answer panel
-    settings/        the settings window
-    live/            the Live assist window
+    settings/        the main window with the Settings and Live assist tabs
+    live/            the Live chat window
     live-listener/   audio capture and utterance splitting
   shared/            types, helpers, and assets shared across the app
   pages/             one thin page per window
