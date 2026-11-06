@@ -5,6 +5,12 @@ export interface SegmenterOptions {
   endSilenceMs: number
   maxUtteranceMs: number
   preRollMs: number
+  partialIntervalMs: number
+}
+
+export interface SegmenterHandlers {
+  onUtterance(samples: Float32Array, id: number): void
+  onPartial?(samples: Float32Array, id: number): void
 }
 
 export const DEFAULT_SEGMENTER_OPTIONS: SegmenterOptions = {
@@ -13,7 +19,8 @@ export const DEFAULT_SEGMENTER_OPTIONS: SegmenterOptions = {
   minSpeechMs: 300,
   endSilenceMs: 700,
   maxUtteranceMs: 10000,
-  preRollMs: 240
+  preRollMs: 240,
+  partialIntervalMs: 900
 }
 
 const MIN_THRESHOLD = 0.008
@@ -58,9 +65,11 @@ export class UtteranceSegmenter {
   private speechMs = 0
   private silenceMs = 0
   private levels: number[] = []
+  private utteranceId = 0
+  private lastPartialMs = 0
 
   constructor(
-    private readonly onUtterance: (samples: Float32Array) => void,
+    private readonly handlers: SegmenterHandlers,
     private readonly options: SegmenterOptions = DEFAULT_SEGMENTER_OPTIONS
   ) {
     this.frameSize = Math.round((options.sampleRate * options.frameMs) / 1000)
@@ -99,10 +108,12 @@ export class UtteranceSegmenter {
         return
       }
       this.speaking = true
+      this.utteranceId += 1
       this.chunks = [...this.preRoll, frame]
       this.preRoll = []
       this.speechMs = this.options.frameMs
       this.silenceMs = 0
+      this.lastPartialMs = 0
       return
     }
 
@@ -115,11 +126,20 @@ export class UtteranceSegmenter {
     }
 
     const lengthMs = this.chunks.length * this.options.frameMs
-    if (this.silenceMs >= this.options.endSilenceMs || lengthMs >= this.options.maxUtteranceMs) this.emit()
+    if (this.silenceMs >= this.options.endSilenceMs || lengthMs >= this.options.maxUtteranceMs) {
+      this.emit()
+      return
+    }
+
+    const partialDue = lengthMs - this.lastPartialMs >= this.options.partialIntervalMs
+    if (isSpeech && partialDue && this.speechMs >= this.options.minSpeechMs && this.handlers.onPartial) {
+      this.lastPartialMs = lengthMs
+      this.handlers.onPartial(concat(this.chunks), this.utteranceId)
+    }
   }
 
   private emit(): void {
-    if (this.speechMs >= this.options.minSpeechMs) this.onUtterance(concat(this.chunks))
+    if (this.speechMs >= this.options.minSpeechMs) this.handlers.onUtterance(concat(this.chunks), this.utteranceId)
     this.speaking = false
     this.chunks = []
     this.speechMs = 0

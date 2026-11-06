@@ -56,7 +56,7 @@ AutoDesk is a lightweight Windows tray app that turns any part of your screen in
   <tr>
     <td width="50%" valign="top">
       <h4>Live assist for calls</h4>
-      Transcribes a call or interview in real time and suggests what to say when you are asked a question.
+      Transcribes a call or interview word by word as people speak, and the AI replies in a chat each time they finish talking.
     </td>
     <td width="50%" valign="top">
       <h4>Speech stays on your PC</h4>
@@ -109,12 +109,12 @@ Hold the **right mouse button**, drag over part of your screen, and let go. The 
 
 ### Live assist
 
-Live assist listens to a call, meeting, or interview, writes a running transcript, and suggests replies.
+Live assist listens to a call, meeting, or interview, streams the transcript into a chat as people speak, and the AI replies like a chatbot.
 
 1. Open the **Live assist** tab in the AutoDesk window. Right-click the tray icon and choose **Live assist** to jump straight to it.
 2. Click **Start**. Unsaved changes are saved, the **Live chat** window opens, and transcription begins. The first start takes a few seconds while the speech engine loads.
-3. The chat fills in as people speak. What the other person says (system audio) appears on the left as **Them**, and what you say (microphone) appears on the right as **You**.
-4. When they ask a question, an AI suggestion streams into the chat. Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Space</kbd> or click **Ask AI** at any time to get a suggestion for the conversation so far.
+3. Words appear on the right as they are spoken, then settle into a message when the speaker pauses. System audio is labeled **Them**, and your microphone is labeled **You**.
+4. Each time they finish talking, the AI reply streams in on the left, telling you what to say. Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Space</kbd> to get a reply right away.
 5. Click **Stop** in the chat or on the Live assist tab to stop listening. Closing the chat window also stops it.
 
 Speech recognition uses [whisper.cpp](https://github.com/ggml-org/whisper.cpp) with the `base` model (about 60 MB). It is included in the installer, so there is nothing extra to download, and it runs entirely on your PC. Suggestions use the AI provider and model from Settings.
@@ -136,7 +136,7 @@ Speech recognition uses [whisper.cpp](https://github.com/ggml-org/whisper.cpp) w
 | Appearance | Match Windows, Light, or Dark |
 | Start with Windows | Launch AutoDesk when you sign in |
 
-The **Live assist** tab has its own options: spoken language, whether to listen to system audio and the microphone, automatic suggestions, and the instructions for suggestions.
+The **Live assist** tab has its own options: spoken language, whether to listen to system audio and the microphone, automatic replies, and the instructions for AI replies.
 
 <details>
 <summary><b>Default endpoints</b></summary>
@@ -187,7 +187,7 @@ When the chosen model cannot read images, AutoDesk sends the screenshot to the i
     credentials.json    API keys, encrypted for your Windows account
   ```
 
-- Live assist records audio only while it is started. Audio is transcribed on your PC and is never saved or uploaded. The transcript text is sent to your provider to generate suggestions.
+- Live assist records audio only while it is started. Audio is transcribed on your PC and is never saved or uploaded. The transcript text is sent to your provider to generate replies.
 - API keys are encrypted with Windows' built-in data protection, so the file cannot be read on another PC or by another Windows user. If you paste a plain key into `credentials.json` by hand, AutoDesk encrypts it the next time it starts.
 - Click **Open folder** in Settings to jump to this folder.
 
@@ -237,16 +237,16 @@ flowchart LR
 ```mermaid
 flowchart LR
     A[System audio<br/>and microphone] --> B[Hidden listener window<br/>16 kHz audio]
-    B --> C[Split into utterances<br/>on pauses]
+    B --> C[Live snapshots and<br/>utterances on pauses]
     C --> D[Local whisper-server<br/>transcribes]
     D --> E[Transcript in the<br/>Live chat window]
-    E --> F[Question or hotkey<br/>asks the AI]
+    E --> F[End of their turn<br/>gets an AI reply]
 ```
 
 1. A hidden window captures system audio through Windows loopback and the microphone through the default input device.
-2. Each source is split into utterances on pauses, with a noise floor that adapts to steady background sound. Long speech is cut every 10 seconds so answers do not wait for the speaker to stop.
+2. Each source is split into utterances on pauses, with a noise floor that adapts to steady background sound. Long speech is cut every 10 seconds so replies do not wait for the speaker to stop. While someone is talking, a snapshot of the utterance so far is transcribed about every second, which streams the words into the chat.
 3. Each utterance is sent to `whisper-server.exe` on `127.0.0.1`, started on a free port when Live assist starts and stopped when it ends.
-4. When a line from system audio looks like a question, AutoDesk waits a moment for the speaker to finish, then streams a suggestion from your provider using the recent transcript.
+4. When a line from system audio arrives, AutoDesk waits a moment, and keeps waiting while they are still talking, then streams a reply from your provider using the recent transcript. A new turn that arrives during a reply is answered after it finishes.
 
 </details>
 

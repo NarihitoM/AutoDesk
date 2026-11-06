@@ -61,22 +61,12 @@ export function LiveView() {
         )}
       </div>
 
-      <ChatFeed lines={state?.lines ?? []} suggestions={state?.suggestions ?? []} listening={status.kind === 'listening'} />
-
-      <footer className="flex items-center gap-2 border-t border-line px-3 pt-2.5 pb-3">
-        <span className="min-w-0 flex-1 text-[12px] leading-snug text-faint">
-          Suggestions appear in the chat when they ask you a question.
-        </span>
-        <button
-          type="button"
-          className="h-9 flex-none rounded-control bg-accent-strong px-3.5 text-[13px] font-semibold whitespace-nowrap text-on-accent disabled:opacity-45"
-          onClick={bridge.live.ask}
-          disabled={!state || state.lines.length === 0}
-          title={state ? `Shortcut: ${state.hotkey}` : undefined}
-        >
-          Ask AI{state ? ` (${state.hotkey})` : ''}
-        </button>
-      </footer>
+      <ChatFeed
+        lines={state?.lines ?? []}
+        partials={state?.partials ?? {}}
+        suggestions={state?.suggestions ?? []}
+        listening={status.kind === 'listening'}
+      />
     </div>
   )
 }

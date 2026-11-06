@@ -26,5 +26,6 @@ export const Channels = {
   liveLaunch: 'live:launch',
   listenerCommand: 'listener:command',
   listenerAudio: 'listener:audio',
+  listenerPartial: 'listener:partial',
   listenerStatus: 'listener:status'
 } as const

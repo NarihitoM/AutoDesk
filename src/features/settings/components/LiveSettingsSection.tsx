@@ -43,12 +43,12 @@ export function LiveSettingsSection({ value, onChange }: LiveSettingsSectionProp
 
       <label className={styles.checkbox}>
         <input type="checkbox" checked={value.autoAnswer} onChange={(event) => update('autoAnswer', event.target.checked)} />
-        <span>Suggest a reply automatically when they ask a question</span>
+        <span>Reply automatically when they finish speaking</span>
       </label>
-      <span className={styles.hint}>Press {LIVE_HOTKEY_LABEL} at any time while listening to ask the AI for a suggestion.</span>
+      <span className={styles.hint}>Press {LIVE_HOTKEY_LABEL} while listening to get a reply right away.</span>
 
       <label className={styles.field}>
-        <span className={styles.label}>Instructions for suggestions</span>
+        <span className={styles.label}>Instructions for AI replies</span>
         <textarea
           className={styles.textarea}
           value={value.prompt}

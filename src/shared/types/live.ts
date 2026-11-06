@@ -22,9 +22,12 @@ export type LiveStatus =
   | { kind: 'listening'; speakers: Speaker[] }
   | { kind: 'error'; message: string }
 
+export type PartialLines = Partial<Record<Speaker, string>>
+
 export interface LiveState {
   status: LiveStatus
   lines: TranscriptLine[]
+  partials: PartialLines
   suggestions: Suggestion[]
   hotkey: string
 }
@@ -33,6 +36,7 @@ export type LiveEvent =
   | { type: 'snapshot'; state: LiveState }
   | { type: 'status'; status: LiveStatus }
   | { type: 'line'; line: TranscriptLine }
+  | { type: 'partial'; speaker: Speaker; text: string }
   | { type: 'suggestion'; suggestion: Suggestion }
   | { type: 'delta'; id: string; text: string }
 

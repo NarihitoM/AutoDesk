@@ -18,9 +18,9 @@ function describeError(error: unknown, speaker: Speaker): string {
 
 async function openSource(speaker: Speaker): Promise<ActiveSource> {
   const stream = speaker === 'them' ? await openSystemAudio() : await openMicrophone()
-  const segmenter = new UtteranceSegmenter((samples) => {
-    const pcm = toInt16(samples)
-    bridge.listener.sendAudio(speaker, pcm.buffer)
+  const segmenter = new UtteranceSegmenter({
+    onUtterance: (samples, id) => bridge.listener.sendAudio(speaker, id, toInt16(samples).buffer),
+    onPartial: (samples, id) => bridge.listener.sendPartial(speaker, id, toInt16(samples).buffer)
   })
   const capture = await startCapture(stream, (samples) => segmenter.push(samples))
   return { capture, segmenter }

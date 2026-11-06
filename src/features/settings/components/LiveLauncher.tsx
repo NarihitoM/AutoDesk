@@ -18,8 +18,8 @@ export function LiveLauncher({ starting, onStart }: LiveLauncherProps) {
       <div className="flex flex-col gap-1.5">
         <h2 className="text-[17px] font-semibold">Live assist</h2>
         <p className="text-muted">
-          Click Start to open the live chat. It transcribes the call as people speak and suggests what to say when you
-          are asked a question. Press {LIVE_HOTKEY_LABEL} any time for a suggestion.
+          Click Start to open the live chat. It transcribes the call word by word as people speak, and the AI replies in
+          the chat each time they finish talking. Press {LIVE_HOTKEY_LABEL} to get a reply right away.
         </p>
       </div>
 

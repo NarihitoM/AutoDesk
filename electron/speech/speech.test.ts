@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildLivePrompt, formatTranscript, latestQuestion } from '../live/livePrompt'
-import { cleanTranscript, looksLikeQuestion } from './transcript'
+import { cleanTranscript } from './transcript'
 import { encodeWav } from './wav'
 
 const line = (speaker: 'them' | 'you', text: string, id = text) => ({ id, speaker, text, at: 0 })
@@ -12,20 +12,6 @@ describe('cleanTranscript', () => {
 
   it.each(['[BLANK_AUDIO]', '(music)', ' Thank you. ', 'you', '...', '♪♪'])('drops %s', (text) =>
     expect(cleanTranscript(text)).toBe('')
-  )
-})
-
-describe('looksLikeQuestion', () => {
-  it.each([
-    'What is your biggest strength?',
-    'Tell me about a project you led.',
-    'Okay. Can you walk me through your resume',
-    'how would you scale this service'
-  ])('treats "%s" as a question', (text) => expect(looksLikeQuestion(text)).toBe(true))
-
-  it.each(['That sounds great.', 'I worked there for three years.', 'Thanks for joining today.'])(
-    'does not treat "%s" as a question',
-    (text) => expect(looksLikeQuestion(text)).toBe(false)
   )
 })
 

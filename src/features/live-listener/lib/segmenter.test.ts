@@ -25,8 +25,16 @@ function noise(ms: number, amplitude: number, seed = 1): Float32Array {
 
 function collect() {
   const utterances: Float32Array[] = []
-  const segmenter = new UtteranceSegmenter((samples) => utterances.push(samples))
-  return { segmenter, utterances }
+  const ids: number[] = []
+  const partials: { id: number; length: number }[] = []
+  const segmenter = new UtteranceSegmenter({
+    onUtterance: (samples, id) => {
+      utterances.push(samples)
+      ids.push(id)
+    },
+    onPartial: (samples, id) => partials.push({ id, length: samples.length })
+  })
+  return { segmenter, utterances, ids, partials }
 }
 
 describe('UtteranceSegmenter', () => {
@@ -71,6 +79,24 @@ describe('UtteranceSegmenter', () => {
     const { segmenter, utterances } = collect()
     segmenter.push(speech(25000, 0.3))
     expect(utterances.length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('sends growing partial snapshots while someone is speaking', () => {
+    const { segmenter, ids, partials } = collect()
+    segmenter.push(speech(3000, 0.3))
+    segmenter.push(new Float32Array(RATE))
+    expect(partials.length).toBeGreaterThanOrEqual(2)
+    expect(partials.every((partial) => partial.id === ids[0])).toBe(true)
+    expect(partials[1]?.length ?? 0).toBeGreaterThan(partials[0]?.length ?? 0)
+  })
+
+  it('gives each utterance a new id', () => {
+    const { segmenter, ids } = collect()
+    for (let turn = 0; turn < 2; turn++) {
+      segmenter.push(speech(1000, 0.3))
+      segmenter.push(new Float32Array(RATE))
+    }
+    expect(ids).toEqual([1, 2])
   })
 
   it('converts samples to 16-bit PCM with clipping', () => {

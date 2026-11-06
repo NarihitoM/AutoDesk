@@ -50,7 +50,9 @@ const api: AutoDeskApi = {
   },
   listener: {
     onCommand: (listener) => listen<ListenerCommand>(Channels.listenerCommand, listener),
-    sendAudio: (speaker: Speaker, pcm: ArrayBuffer) => ipcRenderer.send(Channels.listenerAudio, speaker, pcm),
+    sendAudio: (speaker: Speaker, id: number, pcm: ArrayBuffer) => ipcRenderer.send(Channels.listenerAudio, speaker, id, pcm),
+    sendPartial: (speaker: Speaker, id: number, pcm: ArrayBuffer) =>
+      ipcRenderer.send(Channels.listenerPartial, speaker, id, pcm),
     reportStatus: (status: ListenerStatus) => ipcRenderer.send(Channels.listenerStatus, status)
   }
 }

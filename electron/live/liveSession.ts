@@ -1,11 +1,19 @@
 import { randomUUID } from 'node:crypto'
 import { globalShortcut } from 'electron'
 import { KEY_REQUIRED, LIVE_HOTKEY, LIVE_HOTKEY_LABEL } from '@/shared/lib/providers'
-import type { ListenerStatus, LiveState, LiveStatus, Speaker, Suggestion, TranscriptLine } from '@/shared/types/live'
+import type {
+  ListenerStatus,
+  LiveState,
+  LiveStatus,
+  PartialLines,
+  Speaker,
+  Suggestion,
+  TranscriptLine
+} from '@/shared/types/live'
 import { providers } from '../Agent/providers'
 import { streamChat } from '../Agent/stream'
 import { getApiKey, getSettings } from '../settings/settingsStore'
-import { cleanTranscript, looksLikeQuestion } from '../speech/transcript'
+import { cleanTranscript } from '../speech/transcript'
 import { encodeWav } from '../speech/wav'
 import { whisperServer } from '../speech/whisperServer'
 import { sendListenerCommand, sendLiveEvent } from '../tools/windows'
@@ -22,17 +30,26 @@ function describeError(error: unknown): string {
 class LiveSession {
   private status: LiveStatus = { kind: 'idle' }
   private lines: TranscriptLine[] = []
+  private partials: PartialLines = {}
   private suggestions: Suggestion[] = []
   private speakers = new Set<Speaker>()
   private queue: Promise<void> = Promise.resolve()
   private answerTimer: ReturnType<typeof setTimeout> | null = null
   private controller: AbortController | null = null
   private running = false
+  private run = 0
+  private finalized: Record<Speaker, number> = { them: 0, you: 0 }
+  private pendingFinals = 0
+  private partialBusy = false
+  private answering = false
+  private answerAgain = false
+  private answeredLineId: string | null = null
 
   snapshot(): LiveState {
     return {
       status: this.status,
       lines: [...this.lines],
+      partials: { ...this.partials },
       suggestions: this.suggestions.map((suggestion) => ({ ...suggestion })),
       hotkey: LIVE_HOTKEY_LABEL
     }
@@ -47,7 +64,9 @@ class LiveSession {
     }
 
     this.running = true
+    this.run += 1
     this.speakers.clear()
+    this.resetPartials()
     this.setStatus({ kind: 'starting' })
     try {
       await whisperServer.start(live.language)
@@ -65,8 +84,11 @@ class LiveSession {
   stop(): void {
     const wasActive = this.running || this.status.kind !== 'idle'
     this.running = false
+    this.run += 1
     this.speakers.clear()
+    this.resetPartials()
     this.clearAnswerTimer()
+    this.answerAgain = false
     this.controller?.abort()
     sendListenerCommand({ type: 'stop' })
     whisperServer.stop()
@@ -89,35 +111,77 @@ class LiveSession {
     }
   }
 
-  audio(speaker: Speaker, pcm: Int16Array): void {
+  audio(speaker: Speaker, id: number, pcm: Int16Array): void {
     if (!this.running) return
+    const run = this.run
+    this.pendingFinals += 1
     this.queue = this.queue
       .then(async () => {
-        if (!this.running) return
+        if (run !== this.run) return
         const text = cleanTranscript(await whisperServer.transcribe(encodeWav(pcm)))
-        if (!this.running) return
+        if (run !== this.run) return
+        this.finalized[speaker] = Math.max(this.finalized[speaker], id)
         if (this.status.kind === 'error' && this.speakers.size > 0) {
           this.setStatus({ kind: 'listening', speakers: [...this.speakers] })
         }
-        if (text) this.addLine(speaker, text)
+        if (text) {
+          this.addLine(speaker, text)
+        } else {
+          this.setPartial(speaker, '')
+        }
       })
       .catch((error: unknown) => {
-        if (this.running) this.setStatus({ kind: 'error', message: describeError(error) })
+        if (run === this.run) this.setStatus({ kind: 'error', message: describeError(error) })
+      })
+      .finally(() => {
+        this.pendingFinals -= 1
+      })
+  }
+
+  partial(speaker: Speaker, id: number, pcm: Int16Array): void {
+    if (!this.running || this.partialBusy || this.pendingFinals > 0 || id <= this.finalized[speaker]) return
+    const run = this.run
+    this.partialBusy = true
+    whisperServer
+      .transcribe(encodeWav(pcm))
+      .then((raw) => {
+        const text = cleanTranscript(raw)
+        if (run !== this.run || id <= this.finalized[speaker] || !text) return
+        this.setPartial(speaker, text)
+        if (speaker === 'them' && this.answerTimer) this.scheduleAnswer()
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        this.partialBusy = false
       })
   }
 
   ask(): void {
     this.clearAnswerTimer()
-    void this.answer()
+    void this.answer(true)
   }
 
   private addLine(speaker: Speaker, text: string): void {
     const line: TranscriptLine = { id: randomUUID(), speaker, text, at: Date.now() }
     this.lines = [...this.lines, line].slice(-MAX_LINES)
+    delete this.partials[speaker]
     sendLiveEvent({ type: 'line', line })
 
-    if (speaker !== 'them' || !getSettings().live.autoAnswer) return
-    if (looksLikeQuestion(text) || this.answerTimer) this.scheduleAnswer()
+    if (speaker === 'them' && getSettings().live.autoAnswer) this.scheduleAnswer()
+  }
+
+  private setPartial(speaker: Speaker, text: string): void {
+    if (text) {
+      this.partials[speaker] = text
+    } else {
+      delete this.partials[speaker]
+    }
+    sendLiveEvent({ type: 'partial', speaker, text })
+  }
+
+  private resetPartials(): void {
+    this.partials = {}
+    this.finalized = { them: 0, you: 0 }
   }
 
   private scheduleAnswer(): void {
@@ -133,8 +197,19 @@ class LiveSession {
     this.answerTimer = null
   }
 
-  private async answer(): Promise<void> {
-    this.controller?.abort()
+  private latestTheirLine(): TranscriptLine | undefined {
+    return [...this.lines].reverse().find((line) => line.speaker === 'them')
+  }
+
+  private async answer(force = false): Promise<void> {
+    if (this.answering) {
+      this.answerAgain = true
+      return
+    }
+    const latest = this.latestTheirLine()
+    if (!force && (!latest || latest.id === this.answeredLineId)) return
+    this.answeredLineId = latest?.id ?? null
+    this.answering = true
     const controller = new AbortController()
     this.controller = controller
 
@@ -166,6 +241,11 @@ class LiveSession {
       suggestion.streaming = false
       if (this.controller === controller) this.controller = null
       sendLiveEvent({ type: 'suggestion', suggestion: { ...suggestion } })
+      this.answering = false
+      if (this.answerAgain && this.running) {
+        this.answerAgain = false
+        void this.answer()
+      }
     }
   }
 

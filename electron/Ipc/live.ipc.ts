@@ -26,6 +26,10 @@ function asPcm(value: unknown): Int16Array | null {
   return new Int16Array(bytes.slice().buffer)
 }
 
+function asUtteranceId(value: unknown): number | null {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value > 0 ? value : null
+}
+
 function asListenerStatus(value: unknown): ListenerStatus | null {
   const speaker = asSpeaker(pick(value, 'speaker'))
   const ok = pick(value, 'ok')
@@ -72,11 +76,20 @@ export function registerLiveIpc(): void {
     if (isLiveSender(event.sender)) closeLiveWindow()
   })
 
-  ipcMain.on(Channels.listenerAudio, (event, rawSpeaker: unknown, rawPcm: unknown) => {
+  ipcMain.on(Channels.listenerAudio, (event, rawSpeaker: unknown, rawId: unknown, rawPcm: unknown) => {
     if (!isListenerSender(event.sender)) return
     const speaker = asSpeaker(rawSpeaker)
+    const id = asUtteranceId(rawId)
     const pcm = asPcm(rawPcm)
-    if (speaker && pcm) liveSession.audio(speaker, pcm)
+    if (speaker && id && pcm) liveSession.audio(speaker, id, pcm)
+  })
+
+  ipcMain.on(Channels.listenerPartial, (event, rawSpeaker: unknown, rawId: unknown, rawPcm: unknown) => {
+    if (!isListenerSender(event.sender)) return
+    const speaker = asSpeaker(rawSpeaker)
+    const id = asUtteranceId(rawId)
+    const pcm = asPcm(rawPcm)
+    if (speaker && id && pcm) liveSession.partial(speaker, id, pcm)
   })
 
   ipcMain.on(Channels.listenerStatus, (event, raw: unknown) => {

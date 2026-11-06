@@ -13,8 +13,20 @@ function reduce(state: LiveState | null, event: LiveEvent): LiveState | null {
   switch (event.type) {
     case 'status':
       return { ...state, status: event.status }
-    case 'line':
-      return { ...state, lines: [...state.lines, event.line] }
+    case 'line': {
+      const partials = { ...state.partials }
+      delete partials[event.line.speaker]
+      return { ...state, lines: [...state.lines, event.line], partials }
+    }
+    case 'partial': {
+      const partials = { ...state.partials }
+      if (event.text) {
+        partials[event.speaker] = event.text
+      } else {
+        delete partials[event.speaker]
+      }
+      return { ...state, partials }
+    }
     case 'suggestion': {
       const exists = state.suggestions.some((suggestion) => suggestion.id === event.suggestion.id)
       return {
