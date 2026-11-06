@@ -138,6 +138,7 @@ export class ChatSession {
       model,
       baseUrl: target.config.baseUrl,
       apiKey: target.apiKey,
+      reasoning: target.config.reasoning,
       turns: [{ role: 'user', text: readerPrompt(question), image: this.image }]
     }
 
@@ -159,6 +160,7 @@ export class ChatSession {
       model: target.config.model,
       baseUrl: target.config.baseUrl,
       apiKey: target.apiKey,
+      reasoning: target.config.reasoning,
       turns: this.buildTurns(reply.id)
     }
     for await (const delta of streamChat(target.provider, request, signal)) {

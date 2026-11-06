@@ -1,4 +1,5 @@
 import type { ChatRole } from '@/shared/types/ipc'
+import type { ReasoningLevel } from '@/shared/types/settings'
 
 export interface ChatImage {
   mediaType: 'image/png'
@@ -17,7 +18,7 @@ export interface ChatRequest {
   apiKey: string | null
   turns: ChatTurn[]
   maxTokens?: number
-  skipReasoning?: boolean
+  reasoning?: ReasoningLevel
 }
 
 export interface HttpRequest {

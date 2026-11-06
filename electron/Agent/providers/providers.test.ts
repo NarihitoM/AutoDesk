@@ -49,9 +49,13 @@ describe('openAiProvider', () => {
     expect(openAi.body).not.toHaveProperty('max_tokens')
   })
 
-  it('asks the server to skip reasoning when requested', () => {
-    expect(openAiProvider.buildRequest(request({ skipReasoning: true })).body).toMatchObject({ reasoning_effort: 'none' })
-    expect(openAiProvider.buildRequest(request()).body).not.toHaveProperty('reasoning_effort')
+  it('sets the reasoning effort, or leaves it to the model by default', () => {
+    expect(openAiProvider.buildRequest(request({ reasoning: 'off' })).body).toMatchObject({ reasoning_effort: 'none' })
+    expect(openAiProvider.buildRequest(request({ reasoning: 'high' })).body).toMatchObject({ reasoning_effort: 'high' })
+    expect(openAiProvider.buildRequest(request({ reasoning: 'default' })).body).not.toHaveProperty('reasoning_effort')
+    const openRouter = openAiProvider.buildRequest(request({ reasoning: 'low', baseUrl: 'https://openrouter.ai/api/v1' }))
+    expect(openRouter.body).toMatchObject({ reasoning: { effort: 'low' } })
+    expect(openRouter.body).not.toHaveProperty('reasoning_effort')
   })
 
   it('omits the auth header without a key', () => {
@@ -99,6 +103,15 @@ describe('anthropicProvider', () => {
     expect(http.body).toMatchObject({ fallbacks: 'default' })
   })
 
+  it('turns thinking off or sets its effort', () => {
+    expect(anthropicProvider.buildRequest(request({ reasoning: 'off' })).body).toMatchObject({ thinking: { type: 'disabled' } })
+    expect(anthropicProvider.buildRequest(request({ reasoning: 'medium' })).body).toMatchObject({
+      thinking: { type: 'adaptive' },
+      output_config: { effort: 'medium' }
+    })
+    expect(anthropicProvider.buildRequest(request()).body).not.toHaveProperty('thinking')
+  })
+
   it('uses the requested output token limit', () => {
     expect(anthropicProvider.buildRequest(request({ maxTokens: 500 })).body).toMatchObject({ max_tokens: 500 })
   })
@@ -137,6 +150,16 @@ describe('geminiProvider', () => {
         { role: 'user', parts: [{ text: 'Explain more' }] }
       ]
     })
+  })
+
+  it('sets a thinking budget for the reasoning level', () => {
+    expect(geminiProvider.buildRequest(request({ reasoning: 'off' })).body).toMatchObject({
+      generationConfig: { thinkingConfig: { thinkingBudget: 0 } }
+    })
+    expect(geminiProvider.buildRequest(request({ reasoning: 'high', maxTokens: 500 })).body).toMatchObject({
+      generationConfig: { maxOutputTokens: 500, thinkingConfig: { thinkingBudget: 24576 } }
+    })
+    expect(geminiProvider.buildRequest(request()).body).not.toHaveProperty('generationConfig')
   })
 
   it('limits output tokens when asked', () => {

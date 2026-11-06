@@ -1,4 +1,4 @@
-import type { CaptureKey, ModifierKey, ProviderId, ThemeMode } from '@/shared/types/settings'
+import type { CaptureKey, ModifierKey, ProviderId, ReasoningLevel, ThemeMode } from '@/shared/types/settings'
 
 export const PROVIDER_IDS: readonly ProviderId[] = [
   'openai',
@@ -57,17 +57,6 @@ export const KEY_REQUIRED: Record<ProviderId, boolean> = {
   compatible: false
 }
 
-export const CAN_SKIP_REASONING: Record<ProviderId, boolean> = {
-  openai: false,
-  anthropic: false,
-  gemini: false,
-  groq: false,
-  openrouter: false,
-  ollama: true,
-  lmstudio: false,
-  compatible: false
-}
-
 export const USES_KEY: Record<ProviderId, boolean> = byProvider((id) => id !== 'ollama' && id !== 'lmstudio')
 
 export const KEY_URLS: Partial<Record<ProviderId, string>> = {
@@ -92,6 +81,16 @@ export const CAPTURE_GESTURES: Record<CaptureKey, string> = {
   alt: 'Hold Alt + drag',
   ctrl: 'Hold Ctrl + drag',
   shift: 'Hold Shift + drag'
+}
+
+export const REASONING_LEVELS: readonly ReasoningLevel[] = ['default', 'off', 'low', 'medium', 'high']
+
+export const REASONING_LABELS: Record<ReasoningLevel, string> = {
+  default: 'Default',
+  off: 'Off',
+  low: 'Low',
+  medium: 'Medium',
+  high: 'High'
 }
 
 export const THEME_MODES: readonly ThemeMode[] = ['system', 'light', 'dark']

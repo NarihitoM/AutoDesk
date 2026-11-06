@@ -127,6 +127,7 @@ Speech recognition uses [whisper.cpp](https://github.com/ggml-org/whisper.cpp) w
 | API key | Your key for that provider. Optional for local servers. |
 | Model | A dropdown of every model the provider offers, tagged **Images** or **Text only**. It stays empty until the provider is connected. |
 | Image reader | Shown when the chosen model cannot read images. This model describes the screenshot, and your chosen model answers from that description. **Automatic** picks the first model tagged Images and is used only when needed. Pick a specific model to always use it for models not tagged Images. |
+| Reasoning | For thinking models: **Default** leaves it to the model, **Off** answers fastest, and **Low**, **Medium**, or **High** think longer on hard questions. Saved per provider, and used for captures, the image reader, and Live assist. Ollama starts at Off. |
 | Base URL | Change only for a proxy or a self-hosted server |
 | Capture key | Right mouse button (default), or hold <kbd>Alt</kbd>, <kbd>Ctrl</kbd>, or <kbd>Shift</kbd> and left-drag |
 | Prompt | The instruction sent with every capture |
@@ -309,7 +310,8 @@ The Release workflow sets the app version from the tag, runs the checks, builds 
 | Live assist says the speech engine is missing | Run `npm run fetch:speech` (development only; the installer already includes it). |
 | Live assist hears nothing from a call | Make sure the audio plays through the default output device. |
 | Live chat shows `413 Payload Too Large` or a rate limit error | Your provider's free tier allows very few tokens per minute for that model. Pick a model with a higher limit, such as `llama-3.1-8b-instant` on Groq, or upgrade the plan. |
-| Live chat AI replies are empty or very slow | The model is a thinking model that spends its reply on reasoning. AutoDesk turns reasoning off for Ollama, so update Ollama if it still happens, or choose a model that answers directly. |
+| Live chat AI replies are empty or very slow | The model is a thinking model that spends its reply on reasoning. Set **Reasoning** to **Off** for the provider in Settings, or choose a model that answers directly. |
+| The provider returns an error after changing Reasoning | Not every model accepts every level. Set **Reasoning** back to **Default** for that provider. |
 | The model list says it could not load models | Check the API key and base URL. For Ollama and LM Studio, make sure the app is running and its local server is started. The model dropdown stays empty until the list loads. |
 
 ## Third-party software

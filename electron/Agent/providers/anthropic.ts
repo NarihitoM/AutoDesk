@@ -42,6 +42,12 @@ export const anthropicProvider: VisionProvider = {
       messages: request.turns.map(toMessage)
     }
 
+    if (request.reasoning === 'off') body.thinking = { type: 'disabled' }
+    if (request.reasoning && request.reasoning !== 'default' && request.reasoning !== 'off') {
+      body.thinking = { type: 'adaptive' }
+      body.output_config = { effort: request.reasoning }
+    }
+
     if (usesServerFallback(request)) {
       headers['anthropic-beta'] = FALLBACK_BETA
       body.fallbacks = 'default'

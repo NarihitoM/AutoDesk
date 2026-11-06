@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto'
 import { globalShortcut } from 'electron'
-import { CAN_SKIP_REASONING, KEY_REQUIRED, LIVE_HOTKEY, LIVE_HOTKEY_LABEL } from '@/shared/lib/providers'
+import { KEY_REQUIRED, LIVE_HOTKEY, LIVE_HOTKEY_LABEL } from '@/shared/lib/providers'
 import type { ListenerStatus, LiveState, LiveStatus, Suggestion, TranscriptLine } from '@/shared/types/live'
+import type { ReasoningLevel } from '@/shared/types/settings'
 import { providers } from '../Agent/providers'
 import { streamChat } from '../Agent/stream'
 import { getApiKey, getSettings } from '../settings/settingsStore'
@@ -14,9 +15,15 @@ import { buildLivePrompt, latestQuestion } from './livePrompt'
 const TURN_GAP_MS = 1500
 const MAX_LINES = 400
 const MAX_SUGGESTIONS = 20
-const REPLY_MAX_TOKENS = 1024
+const REPLY_MAX_TOKENS: Record<ReasoningLevel, number> = {
+  default: 1024,
+  off: 1024,
+  low: 2048,
+  medium: 4096,
+  high: 8192
+}
 const EMPTY_REPLY =
-  'The model sent back no answer. Thinking models can use the whole reply on reasoning. Choose a model that answers directly in Settings.'
+  'The model sent back no answer. Thinking models can use the whole reply on reasoning. Set Reasoning to Off in Settings, or choose a model that answers directly.'
 
 function describeError(error: unknown): string {
   return error instanceof Error && error.message ? error.message : 'Something went wrong.'
@@ -253,8 +260,8 @@ class LiveSession {
         model: config.model,
         baseUrl: config.baseUrl,
         apiKey,
-        maxTokens: REPLY_MAX_TOKENS,
-        skipReasoning: CAN_SKIP_REASONING[providerId],
+        maxTokens: REPLY_MAX_TOKENS[config.reasoning],
+        reasoning: config.reasoning,
         turns: [{ role: 'user' as const, text: buildLivePrompt(settings.live.prompt, this.lines) }]
       }
       for await (const delta of streamChat(providers[providerId], request, controller.signal)) {

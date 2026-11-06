@@ -40,7 +40,7 @@ function setup(route: ImageRoute, respond: (request: SentRequest) => Response) {
   const session = new ChatSession({ mediaType: 'image/png', base64: 'AAAA' }, 'text-model', (event) => events.push(event))
   const target: SessionTarget = {
     provider: openAiProvider,
-    config: { model: 'text-model', imageModel: '', baseUrl: 'https://example.test/v1' },
+    config: { model: 'text-model', imageModel: '', baseUrl: 'https://example.test/v1', reasoning: 'default' },
     apiKey: 'key',
     keyRequired: true,
     route

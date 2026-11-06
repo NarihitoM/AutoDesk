@@ -28,7 +28,7 @@ vi.mock('../settings/settingsStore', () => ({
   getApiKey: () => 'key',
   getSettings: () => ({
     activeProvider: 'groq',
-    providers: { groq: { model: 'test-model', imageModel: '', baseUrl: 'https://example.com/v1' } },
+    providers: { groq: { model: 'test-model', imageModel: '', baseUrl: 'https://example.com/v1', reasoning: 'default' } },
     live: { language: 'en', autoAnswer: true, prompt: 'Help me.' }
   })
 }))

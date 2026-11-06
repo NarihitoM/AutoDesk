@@ -16,10 +16,13 @@ export type CaptureKey = 'right-mouse' | ModifierKey
 
 export type ThemeMode = 'system' | 'light' | 'dark'
 
+export type ReasoningLevel = 'default' | 'off' | 'low' | 'medium' | 'high'
+
 export interface ProviderConfig {
   model: string
   imageModel: string
   baseUrl: string
+  reasoning: ReasoningLevel
 }
 
 export interface Settings {

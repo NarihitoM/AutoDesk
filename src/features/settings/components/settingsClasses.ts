@@ -23,6 +23,7 @@ export const styles = {
   dot: 'absolute top-2 right-2 size-[7px] rounded-full bg-success',
 
   themeSwitch: 'grid grid-cols-3 gap-1 rounded-card border border-line bg-sunken p-1',
+  reasoningSwitch: 'grid grid-cols-5 gap-1 rounded-card border border-line bg-sunken p-1 max-[540px]:grid-cols-3',
   themeOption:
     'h-8 rounded-control font-semibold text-muted transition-colors hover:text-fg data-[active=true]:bg-raised data-[active=true]:text-fg data-[active=true]:shadow-[0_0_0_1px_var(--color-line-strong)]',
 

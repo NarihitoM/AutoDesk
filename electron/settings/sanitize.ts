@@ -1,4 +1,4 @@
-import { byProvider, CAPTURE_KEYS, LIVE_LANGUAGES, PROVIDER_IDS, THEME_MODES } from '@/shared/lib/providers'
+import { byProvider, CAPTURE_KEYS, LIVE_LANGUAGES, PROVIDER_IDS, REASONING_LEVELS, THEME_MODES } from '@/shared/lib/providers'
 import type { ModelListRequest } from '@/shared/types/models'
 import type { LiveSettings } from '@/shared/types/live'
 import type { KeyChange, ProviderConfig, ProviderId, Settings } from '@/shared/types/settings'
@@ -18,7 +18,8 @@ function sanitizeProvider(raw: unknown, fallback: ProviderConfig): ProviderConfi
   return {
     model: asText(pick(raw, 'model'))?.trim() ?? fallback.model,
     imageModel: asText(pick(raw, 'imageModel'))?.trim() ?? fallback.imageModel,
-    baseUrl: nonEmptyText(pick(raw, 'baseUrl'), fallback.baseUrl).replace(/\/+$/, '')
+    baseUrl: nonEmptyText(pick(raw, 'baseUrl'), fallback.baseUrl).replace(/\/+$/, ''),
+    reasoning: oneOf(pick(raw, 'reasoning'), REASONING_LEVELS, fallback.reasoning)
   }
 }
 
