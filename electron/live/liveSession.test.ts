@@ -94,6 +94,31 @@ describe('liveSession turns', () => {
     session.stop()
   })
 
+  it('clears the chat and the history sent to the AI when stopped', async () => {
+    const session = await loadSession()
+    mocks.transcripts.push('First message.', 'After restart.')
+
+    session.audio(1, pcm)
+    await settle()
+    await vi.advanceTimersByTimeAsync(1600)
+    await settle()
+    expect(session.snapshot().suggestions).toHaveLength(1)
+
+    session.stop()
+    expect(session.snapshot().lines).toEqual([])
+    expect(session.snapshot().suggestions).toEqual([])
+    expect(mocks.events.at(-2)).toMatchObject({ type: 'snapshot', state: { lines: [], suggestions: [] } })
+
+    await session.start()
+    session.audio(1, pcm)
+    await settle()
+    await vi.advanceTimersByTimeAsync(1600)
+    await settle()
+    expect(mocks.prompts.at(-1)).not.toContain('First message.')
+    expect(mocks.prompts.at(-1)).toContain('After restart.')
+    session.stop()
+  })
+
   it('starts a new bubble after a pause', async () => {
     const session = await loadSession()
     mocks.transcripts.push('First question?', 'Second question?')

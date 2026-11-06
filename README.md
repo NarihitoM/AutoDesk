@@ -115,7 +115,7 @@ Live assist listens to your computer's audio, such as a call, meeting, interview
 2. Click **Start**. Unsaved changes are saved, the **Live chat** window opens, and transcription begins. The first start takes a few seconds while the speech engine loads.
 3. Words from the system audio appear on the right as **You** while they are spoken. Everything said stays in one message until the audio is quiet for about two seconds.
 4. When the audio pauses, the whole message is sent to the AI, and its reply streams in on the left as **AI**. Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Space</kbd> to get a reply right away.
-5. Click **Stop** in the chat or on the Live assist tab to stop listening. Closing the chat window also stops it.
+5. Click **Stop** in the chat or on the Live assist tab to stop listening. Stopping clears the chat and the history the AI sees, so the next start begins fresh. Closing the chat window also stops it.
 
 Speech recognition uses [whisper.cpp](https://github.com/ggml-org/whisper.cpp) with the `base` model (about 60 MB). It is included in the installer, so there is nothing extra to download, and it runs entirely on your PC. Replies use the AI provider and model from Settings.
 

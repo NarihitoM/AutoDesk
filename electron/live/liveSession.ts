@@ -82,14 +82,21 @@ class LiveSession {
     const wasActive = this.running || this.status.kind !== 'idle'
     this.running = false
     this.run += 1
-    this.closeOpenLine()
     this.resetTurn()
     this.answerAgain = false
     this.controller?.abort()
     sendListenerCommand({ type: 'stop' })
     whisperServer.stop()
     globalShortcut.unregister(LIVE_HOTKEY)
+    this.clearHistory()
     if (wasActive) this.setStatus({ kind: 'idle' })
+  }
+
+  private clearHistory(): void {
+    this.lines = []
+    this.suggestions = []
+    this.answeredKey = null
+    sendLiveEvent({ type: 'snapshot', state: this.snapshot() })
   }
 
   listenerStatus(status: ListenerStatus): void {
@@ -274,7 +281,7 @@ class LiveSession {
     } finally {
       suggestion.streaming = false
       if (this.controller === controller) this.controller = null
-      sendLiveEvent({ type: 'suggestion', suggestion: { ...suggestion } })
+      if (this.suggestions.includes(suggestion)) sendLiveEvent({ type: 'suggestion', suggestion: { ...suggestion } })
       this.answering = false
       if (this.answerAgain && this.running) {
         this.answerAgain = false
