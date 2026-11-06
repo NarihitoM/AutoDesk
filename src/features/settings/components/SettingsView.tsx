@@ -38,6 +38,7 @@ export function SettingsView() {
       </header>
       {loadError && <p className={styles.loadError}>{loadError}</p>}
       {view && <SettingsForm tab={tab} view={view} status={status} onSave={save} />}
+      <p className={styles.credit}>Developed by Narihito</p>
     </main>
   )
 }

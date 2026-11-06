@@ -10,6 +10,7 @@ export const styles = {
   tabs: 'mb-3 grid grid-cols-2 gap-1 rounded-card border border-line bg-sunken p-1',
   tab: 'h-10 rounded-control text-[14px] font-semibold text-muted transition-colors hover:text-fg data-[active=true]:bg-raised data-[active=true]:text-fg data-[active=true]:shadow-[0_0_0_1px_var(--color-line-strong)]',
   loadError: 'rounded-control bg-danger-soft px-3 py-2.5 text-danger',
+  credit: 'pb-5 text-center text-xs text-faint',
 
   form: 'flex flex-col gap-4',
   section: 'flex flex-col gap-4 rounded-card border border-line bg-raised p-[18px]',
