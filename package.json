@@ -44,10 +44,17 @@
       "icon": "autodesk-icon.ico"
     },
     "nsis": {
+      "artifactName": "${productName}.exe",
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
+      "installerIcon": "autodesk-icon.ico",
+      "uninstallerIcon": "autodesk-icon.ico",
+      "installerHeaderIcon": "autodesk-icon.ico",
       "createDesktopShortcut": true,
-      "shortcutName": "AutoDesk"
+      "createStartMenuShortcut": true,
+      "shortcutName": "AutoDesk",
+      "uninstallDisplayName": "AutoDesk",
+      "runAfterFinish": true
     },
     "extraResources": [
       {

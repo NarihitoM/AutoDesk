@@ -67,9 +67,11 @@ AutoDesk is a lightweight Windows tray app that turns any part of your screen in
 
 ## Install
 
-1. Download **`AutoDesk Setup x.y.z.exe`** from the [latest release](https://github.com/NarihitoM/AutoDesk/releases/latest).
-2. Run the installer.
-3. AutoDesk starts in the system tray. The Settings window opens the first time so you can add a key.
+1. Download **[`AutoDesk.exe`](https://github.com/NarihitoM/AutoDesk/releases/latest/download/AutoDesk.exe)** from the [latest release](https://github.com/NarihitoM/AutoDesk/releases/latest).
+2. Run it. Choose whether to install for just you or for everyone on the PC, then pick the install folder (or keep the default) and click **Install**.
+3. AutoDesk starts in the system tray when setup finishes. The Settings window opens the first time so you can add a key.
+
+The speech engine and model for Live assist are included in the installer, so there is nothing else to download.
 
 > [!NOTE]
 > The installer is not code-signed yet, so Windows SmartScreen may show a warning. Click **More info**, then **Run anyway**.
@@ -294,7 +296,7 @@ git tag v0.2.0
 git push origin v0.2.0
 ```
 
-The Release workflow sets the app version from the tag, runs the checks, builds `AutoDesk Setup 0.2.0.exe`, and attaches it to a new GitHub Release with generated notes.
+The Release workflow sets the app version from the tag, runs the checks, builds `AutoDesk.exe`, and attaches it to a new GitHub Release with generated notes.
 
 </details>
 
