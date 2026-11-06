@@ -19,6 +19,7 @@ import type {
   SettingsView
 } from '@/shared/types/settings'
 import type { SaveStatus } from '../hooks/useSettings'
+import { LiveSettingsSection } from './LiveSettingsSection'
 import { ProviderForm } from './ProviderForm'
 import { ProviderLogo } from './ProviderLogo'
 import { styles } from './settingsClasses'
@@ -192,6 +193,8 @@ export function SettingsForm({ view, status, onSave }: SettingsFormProps) {
           />
         </label>
       </section>
+
+      <LiveSettingsSection value={draft.live} onChange={(live) => update('live', live)} />
 
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>General</h2>

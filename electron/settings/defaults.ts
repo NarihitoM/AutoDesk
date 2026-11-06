@@ -3,6 +3,9 @@ import type { Settings } from '@/shared/types/settings'
 export const DEFAULT_PROMPT =
   'Look at this screenshot and help me with it. Explain what it shows, and if it contains a question, error, or task, answer or solve it. Be concise.'
 
+export const DEFAULT_LIVE_PROMPT =
+  'You are helping me during a live conversation. Read the transcript and suggest what I should say in reply to the latest question. Answer in the first person, naturally and concisely, in a short paragraph or 2 to 4 short bullet points.'
+
 export function defaultSettings(): Settings {
   return {
     activeProvider: 'anthropic',
@@ -19,6 +22,13 @@ export function defaultSettings(): Settings {
     prompt: DEFAULT_PROMPT,
     captureKey: 'right-mouse',
     launchAtStartup: false,
-    theme: 'system'
+    theme: 'system',
+    live: {
+      language: 'en',
+      autoAnswer: true,
+      listenSystem: true,
+      listenMic: true,
+      prompt: DEFAULT_LIVE_PROMPT
+    }
   }
 }

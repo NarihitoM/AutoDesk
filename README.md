@@ -53,6 +53,16 @@ AutoDesk is a lightweight Windows tray app that turns any part of your screen in
       No AutoDesk server, no account. Your API keys are encrypted on your PC, and images go straight to the provider you chose.
     </td>
   </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <h4>Live assist for calls</h4>
+      Transcribes a call or interview in real time and suggests what to say when you are asked a question.
+    </td>
+    <td width="50%" valign="top">
+      <h4>Speech stays on your PC</h4>
+      A small speech-to-text model ships inside the installer and runs offline. Only the transcript text goes to the AI.
+    </td>
+  </tr>
 </table>
 
 ## Install
@@ -95,7 +105,21 @@ Hold the **right mouse button**, drag over part of your screen, and let go. The 
 | Ask a follow-up | Type in the panel and press <kbd>Enter</kbd> (<kbd>Shift</kbd>+<kbd>Enter</kbd> adds a new line) |
 | Stop a reply | Click **Stop** |
 | Close the panel | <kbd>Esc</kbd> or **Close** |
-| Pause, Settings, Quit | Right-click the tray icon |
+| Pause, Live assist, Settings, Quit | Right-click the tray icon |
+
+### Live assist
+
+Live assist listens to a call, meeting, or interview, writes a running transcript, and suggests replies.
+
+1. Right-click the tray icon and choose **Live assist**.
+2. Click **Start**. The first start takes a few seconds while the speech engine loads.
+3. The transcript fills in as people speak. Lines from system audio are labeled **Them**, and lines from your microphone are labeled **Me**.
+4. When they ask a question, a suggested reply streams in at the top. Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Space</kbd> or click **Ask AI** at any time to get a suggestion for the conversation so far.
+
+Speech recognition uses [whisper.cpp](https://github.com/ggml-org/whisper.cpp) with the `base` model (about 60 MB). It is included in the installer, so there is nothing extra to download, and it runs entirely on your PC. Suggestions use the AI provider and model from Settings.
+
+> [!TIP]
+> Wear headphones. Otherwise your microphone also picks up the other person from your speakers, and their words appear twice.
 
 ### Settings
 
@@ -109,6 +133,7 @@ Hold the **right mouse button**, drag over part of your screen, and let go. The 
 | Capture key | Right mouse button (default), or hold <kbd>Alt</kbd>, <kbd>Ctrl</kbd>, or <kbd>Shift</kbd> and left-drag |
 | Prompt | The instruction sent with every capture |
 | Appearance | Match Windows, Light, or Dark |
+| Live assist | Spoken language, whether to listen to system audio and the microphone, automatic suggestions, and the instructions for suggestions |
 | Start with Windows | Launch AutoDesk when you sign in |
 
 <details>
@@ -160,6 +185,7 @@ When the chosen model cannot read images, AutoDesk sends the screenshot to the i
     credentials.json    API keys, encrypted for your Windows account
   ```
 
+- Live assist records audio only while it is started. Audio is transcribed on your PC and is never saved or uploaded. The transcript text is sent to your provider to generate suggestions.
 - API keys are encrypted with Windows' built-in data protection, so the file cannot be read on another PC or by another Windows user. If you paste a plain key into `credentials.json` by hand, AutoDesk encrypts it the next time it starts.
 - Click **Open folder** in Settings to jump to this folder.
 
@@ -173,10 +199,13 @@ npm run dev          # run the app with hot reload
 npm test             # unit tests
 npm run test:watch   # unit tests in watch mode
 npm run typecheck    # TypeScript checks
-npm run dist         # build the installer into dist/
+npm run fetch:speech # download the speech engine and model into resources/speech
+npm run dist         # download speech files, then build the installer into dist/
 ```
 
-**Tech stack:** Electron, React, TypeScript, Vite (electron-vite), Tailwind CSS, Zustand, `uiohook-napi` to detect the capture key globally, and `koffi` for the Windows mouse hook behind right-drag capture.
+`npm run dev` needs the speech files for Live assist, so run `npm run fetch:speech` once after cloning. The script downloads a pinned whisper.cpp release and models, checks each file's SHA-256, and skips files that are already up to date. The files are git-ignored and bundled into the installer by `npm run dist`.
+
+**Tech stack:** Electron, React, TypeScript, Vite (electron-vite), Tailwind CSS, Zustand, `uiohook-napi` to detect the capture key globally, `koffi` for the Windows mouse hook behind right-drag capture, and whisper.cpp for offline speech-to-text.
 
 <details>
 <summary><b>How capture works</b></summary>
@@ -200,6 +229,26 @@ flowchart LR
 </details>
 
 <details>
+<summary><b>How Live assist works</b></summary>
+<br />
+
+```mermaid
+flowchart LR
+    A[System audio<br/>and microphone] --> B[Hidden listener window<br/>16 kHz audio]
+    B --> C[Split into utterances<br/>on pauses]
+    C --> D[Local whisper-server<br/>transcribes]
+    D --> E[Transcript in the<br/>Live assist window]
+    E --> F[Question or hotkey<br/>asks the AI]
+```
+
+1. A hidden window captures system audio through Windows loopback and the microphone through the default input device.
+2. Each source is split into utterances on pauses, with a noise floor that adapts to steady background sound. Long speech is cut every 10 seconds so answers do not wait for the speaker to stop.
+3. Each utterance is sent to `whisper-server.exe` on `127.0.0.1`, started on a free port when Live assist starts and stopped when it ends.
+4. When a line from system audio looks like a question, AutoDesk waits a moment for the speaker to finish, then streams a suggestion from your provider using the recent transcript.
+
+</details>
+
+<details>
 <summary><b>Project structure</b></summary>
 <br />
 
@@ -208,7 +257,9 @@ electron/
   main.ts            app startup, tray, and wiring
   preload.ts         safe API exposed to the windows
   Agent/             providers (OpenAI, Anthropic, Gemini), streaming, chat session
-  Ipc/               IPC handlers for capture, AI, and settings
+  Ipc/               IPC handlers for capture, AI, settings, and Live assist
+  live/              Live assist session and prompt
+  speech/            whisper-server process, WAV encoding, transcript cleanup
   settings/          settings storage, defaults, and input checking
   tools/             capture key logic, screen capture, windows, tray
 src/
@@ -216,8 +267,12 @@ src/
     capture-overlay/ the selection overlay
     response-panel/  the answer panel
     settings/        the settings window
+    live/            the Live assist window
+    live-listener/   audio capture and utterance splitting
   shared/            types, helpers, and assets shared across the app
   pages/             one thin page per window
+scripts/
+  fetch-speech.mjs   downloads the speech engine and model
 public/img/
   autodesk-icon.png   tray icon
   autodesk-icon.ico   app and window icon
@@ -252,4 +307,11 @@ The Release workflow sets the app version from the tag, runs the checks, builds 
 | A local model ignores the image | The model does not support images. Use a vision model such as `llava` or `qwen2.5vl`. |
 | Right-drag does nothing | Check that capture is not paused in the tray menu, and that the capture key in Settings is Right mouse button. |
 | A game or app needs right-drag | Choose **Pause capture** in the tray menu while you use it, or switch the capture key to Alt, Ctrl, or Shift. |
+| Live assist says the speech engine is missing | Run `npm run fetch:speech` (development only; the installer already includes it). |
+| Live assist hears nothing from a call | Make sure the call audio plays through the default output device, and that system audio is turned on in Settings. |
+| Your own words appear as **Them** | Your microphone hears your speakers. Use headphones, or turn off one of the sources in Settings. |
 | The model list says it could not load models | Check the API key and base URL. For Ollama and LM Studio, make sure the app is running and its local server is started. The model dropdown stays empty until the list loads. |
+
+## Third-party software
+
+The installer includes [whisper.cpp](https://github.com/ggml-org/whisper.cpp) and its `ggml-base` and Silero VAD models, released under the MIT License. A copy of the license is installed next to the speech engine.

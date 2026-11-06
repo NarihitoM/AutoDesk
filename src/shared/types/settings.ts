@@ -1,3 +1,5 @@
+import type { LiveSettings } from './live'
+
 export type ProviderId =
   | 'openai'
   | 'anthropic'
@@ -27,6 +29,7 @@ export interface Settings {
   captureKey: CaptureKey
   launchAtStartup: boolean
   theme: ThemeMode
+  live: LiveSettings
 }
 
 export interface SettingsView {

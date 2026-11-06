@@ -91,6 +91,30 @@ export const THEME_LABELS: Record<ThemeMode, string> = {
   dark: 'Dark'
 }
 
+export const LIVE_HOTKEY = 'CommandOrControl+Shift+Space'
+
+export const LIVE_HOTKEY_LABEL = 'Ctrl+Shift+Space'
+
+export const LIVE_LANGUAGES: readonly (readonly [string, string])[] = [
+  ['en', 'English'],
+  ['auto', 'Detect automatically'],
+  ['es', 'Spanish'],
+  ['fr', 'French'],
+  ['de', 'German'],
+  ['pt', 'Portuguese'],
+  ['it', 'Italian'],
+  ['nl', 'Dutch'],
+  ['ru', 'Russian'],
+  ['ja', 'Japanese'],
+  ['ko', 'Korean'],
+  ['zh', 'Chinese'],
+  ['hi', 'Hindi'],
+  ['ar', 'Arabic'],
+  ['id', 'Indonesian'],
+  ['vi', 'Vietnamese'],
+  ['th', 'Thai']
+]
+
 export function modifierOf(key: CaptureKey): ModifierKey | null {
   return key === 'right-mouse' ? null : key
 }

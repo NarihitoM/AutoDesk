@@ -18,7 +18,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ci": "vitest run --reporter=default --reporter=github-actions --reporter=junit --outputFile.junit=reports/junit.xml",
-    "dist": "electron-vite build && electron-builder --win"
+    "dist": "npm run fetch:speech && electron-vite build && electron-builder --win",
+    "fetch:speech": "node scripts/fetch-speech.mjs"
   },
   "build": {
     "appId": "com.autodesk.snip",
@@ -47,7 +48,13 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "shortcutName": "AutoDesk"
-    }
+    },
+    "extraResources": [
+      {
+        "from": "resources/speech",
+        "to": "speech"
+      }
+    ]
   },
   "dependencies": {
     "koffi": "3.3.4",

@@ -15,5 +15,14 @@ export const Channels = {
   openDataFolder: 'settings:open-data-folder',
   settingsDirty: 'settings:dirty',
   settingsSaveRequest: 'settings:save-request',
-  settingsClose: 'settings:close'
+  settingsClose: 'settings:close',
+  liveEvent: 'live:event',
+  liveReady: 'live:ready',
+  liveStart: 'live:start',
+  liveStop: 'live:stop',
+  liveAsk: 'live:ask',
+  liveClose: 'live:close',
+  listenerCommand: 'listener:command',
+  listenerAudio: 'listener:audio',
+  listenerStatus: 'listener:status'
 } as const

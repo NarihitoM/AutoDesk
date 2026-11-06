@@ -1,8 +1,10 @@
 import {
   BrowserWindow,
+  desktopCapturer,
   dialog,
   nativeTheme,
   screen,
+  session,
   shell,
   type Display,
   type Point,
@@ -11,13 +13,16 @@ import {
 } from 'electron'
 import { Channels } from '@/shared/lib/channels'
 import type { PanelEvent, SelectionRect } from '@/shared/types/ipc'
+import type { ListenerCommand, LiveEvent } from '@/shared/types/live'
 import type { ThemeMode } from '@/shared/types/settings'
 import { APP_WINDOW_ICON_PATH, PRELOAD_PATH, RENDERER_HTML_PATH } from '../lib/paths'
 import { placePanel } from './geometry'
 
-type Route = 'overlay' | 'panel' | 'settings'
+type Route = 'overlay' | 'panel' | 'settings' | 'live' | 'listener'
 
 const PANEL_SIZE = { width: 440, height: 560 }
+const LIVE_SIZE = { width: 420, height: 640 }
+const LISTENER_PARTITION = 'autodesk-listener'
 const SURFACE_COLORS = { dark: '#14151b', light: '#f6f7fa' }
 
 let overlay: BrowserWindow | null = null
@@ -27,6 +32,8 @@ let panelHiddenForCapture = false
 let settings: BrowserWindow | null = null
 let settingsDirty = false
 let quitting = false
+let live: BrowserWindow | null = null
+let listener: BrowserWindow | null = null
 
 function webPreferences(extra: WebPreferences = {}): WebPreferences {
   return {
@@ -76,6 +83,7 @@ export function watchTheme(): void {
   nativeTheme.on('updated', () => {
     const color = surfaceColor()
     panel?.setBackgroundColor(color)
+    live?.setBackgroundColor(color)
     settings?.setBackgroundColor(color)
   })
 }
@@ -264,4 +272,95 @@ export function closeSettingsWindow(): void {
 
 export function isSettingsSender(sender: WebContents): boolean {
   return settings?.webContents === sender
+}
+
+export function openLiveWindow(onClosed: () => void): void {
+  if (live) {
+    live.show()
+    live.focus()
+    return
+  }
+
+  live = new BrowserWindow({
+    ...LIVE_SIZE,
+    minWidth: 340,
+    minHeight: 360,
+    show: false,
+    frame: false,
+    resizable: true,
+    minimizable: true,
+    maximizable: false,
+    fullscreenable: false,
+    alwaysOnTop: true,
+    title: 'AutoDesk Live',
+    icon: APP_WINDOW_ICON_PATH,
+    backgroundColor: surfaceColor(),
+    webPreferences: webPreferences()
+  })
+  live.setAlwaysOnTop(true, 'floating')
+  harden(live)
+  live.once('ready-to-show', () => live?.show())
+  live.on('closed', () => {
+    live = null
+    onClosed()
+  })
+  loadRoute(live, 'live')
+}
+
+export function closeLiveWindow(): void {
+  live?.close()
+}
+
+export function isLiveSender(sender: WebContents): boolean {
+  return live?.webContents === sender
+}
+
+export function sendLiveEvent(event: LiveEvent): void {
+  live?.webContents.send(Channels.liveEvent, event)
+}
+
+function prepareListenerSession(): Electron.Session {
+  const listenerSession = session.fromPartition(LISTENER_PARTITION)
+  const allowed = (permission: string): boolean => permission === 'media' || permission === 'display-capture'
+  listenerSession.setPermissionRequestHandler((_contents, permission, callback) => callback(allowed(permission)))
+  listenerSession.setPermissionCheckHandler((_contents, permission) => allowed(permission))
+  listenerSession.setDisplayMediaRequestHandler((_request, callback) => {
+    void desktopCapturer
+      .getSources({ types: ['screen'] })
+      .then(([source]) => callback(source ? { video: source, audio: 'loopback' } : {}))
+      .catch(() => callback({}))
+  })
+  return listenerSession
+}
+
+function ensureListenerWindow(): BrowserWindow {
+  if (listener) return listener
+  const created = new BrowserWindow({
+    show: false,
+    width: 320,
+    height: 200,
+    skipTaskbar: true,
+    webPreferences: webPreferences({ session: prepareListenerSession(), backgroundThrottling: false })
+  })
+  harden(created)
+  created.on('closed', () => {
+    if (listener === created) listener = null
+  })
+  loadRoute(created, 'listener')
+  listener = created
+  return created
+}
+
+export function sendListenerCommand(command: ListenerCommand): void {
+  if (command.type === 'stop' && !listener) return
+  const target = ensureListenerWindow()
+  if (target.webContents.isLoading()) {
+    target.webContents.once('did-finish-load', () => target.webContents.send(Channels.listenerCommand, command))
+  } else {
+    target.webContents.send(Channels.listenerCommand, command)
+  }
+}
+
+export function isListenerSender(sender: WebContents): boolean {
+  return listener?.webContents === sender
 }

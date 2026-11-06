@@ -2,7 +2,9 @@ import { app } from 'electron'
 import { KEY_REQUIRED, modifierOf } from '@/shared/lib/providers'
 import { registerAiIpc } from './Ipc/ai.ipc'
 import { handleRightDrag, registerCaptureIpc } from './Ipc/capture.ipc'
+import { registerLiveIpc } from './Ipc/live.ipc'
 import { registerSettingsIpc } from './Ipc/settings.ipc'
+import { liveSession } from './live/liveSession'
 import { getApiKey, getSettings, loadSettings, onSettingsChanged } from './settings/settingsStore'
 import { CaptureTrigger } from './tools/captureTrigger'
 import { startInputHook, stopInputHook } from './tools/inputHook'
@@ -14,6 +16,7 @@ import {
   hideOverlay,
   applyTheme,
   markQuitting,
+  openLiveWindow,
   openSettingsWindow,
   restorePanel,
   showOverlay,
@@ -51,6 +54,7 @@ async function bootstrap(): Promise<void> {
   registerCaptureIpc(trigger)
   registerAiIpc()
   registerSettingsIpc()
+  registerLiveIpc()
 
   const tray = createTray({
     getCaptureKey: () => getSettings().captureKey,
@@ -61,6 +65,7 @@ async function bootstrap(): Promise<void> {
       syncMouseHook()
     },
     onSettings: openSettingsWindow,
+    onLive: () => openLiveWindow(() => liveSession.stop()),
     onQuit: () => app.quit()
   })
   onSettingsChanged((settings) => {
@@ -81,6 +86,7 @@ if (!app.requestSingleInstanceLock()) {
   app.on('second-instance', openSettingsWindow)
   app.on('before-quit', () => {
     markQuitting()
+    liveSession.stop()
     stopMouseHook()
     stopInputHook()
   })

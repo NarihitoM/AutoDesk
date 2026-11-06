@@ -1,5 +1,6 @@
-import { byProvider, CAPTURE_KEYS, PROVIDER_IDS, THEME_MODES } from '@/shared/lib/providers'
+import { byProvider, CAPTURE_KEYS, LIVE_LANGUAGES, PROVIDER_IDS, THEME_MODES } from '@/shared/lib/providers'
 import type { ModelListRequest } from '@/shared/types/models'
+import type { LiveSettings } from '@/shared/types/live'
 import type { KeyChange, ProviderConfig, ProviderId, Settings } from '@/shared/types/settings'
 import { asText, pick } from '../lib/json'
 import { defaultSettings } from './defaults'
@@ -21,6 +22,21 @@ function sanitizeProvider(raw: unknown, fallback: ProviderConfig): ProviderConfi
   }
 }
 
+function flag(value: unknown, fallback: boolean): boolean {
+  return typeof value === 'boolean' ? value : fallback
+}
+
+function sanitizeLive(raw: unknown, fallback: LiveSettings): LiveSettings {
+  const languages = LIVE_LANGUAGES.map(([code]) => code)
+  return {
+    language: oneOf(pick(raw, 'language'), languages, fallback.language),
+    autoAnswer: flag(pick(raw, 'autoAnswer'), fallback.autoAnswer),
+    listenSystem: flag(pick(raw, 'listenSystem'), fallback.listenSystem),
+    listenMic: flag(pick(raw, 'listenMic'), fallback.listenMic),
+    prompt: nonEmptyText(pick(raw, 'prompt'), fallback.prompt)
+  }
+}
+
 export function sanitizeSettings(raw: unknown): Settings {
   const defaults = defaultSettings()
   const providers = pick(raw, 'providers')
@@ -30,7 +46,8 @@ export function sanitizeSettings(raw: unknown): Settings {
     prompt: nonEmptyText(pick(raw, 'prompt'), defaults.prompt),
     captureKey: oneOf(pick(raw, 'captureKey'), CAPTURE_KEYS, defaults.captureKey),
     launchAtStartup: pick(raw, 'launchAtStartup') === true,
-    theme: oneOf(pick(raw, 'theme'), THEME_MODES, defaults.theme)
+    theme: oneOf(pick(raw, 'theme'), THEME_MODES, defaults.theme),
+    live: sanitizeLive(pick(raw, 'live'), defaults.live)
   }
 }
 

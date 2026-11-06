@@ -8,6 +8,7 @@ export interface TrayOptions {
   isPaused(): boolean
   setPaused(paused: boolean): void
   onSettings(): void
+  onLive(): void
   onQuit(): void
 }
 
@@ -35,6 +36,7 @@ export function createTray(options: TrayOptions): TrayHandle {
             refresh()
           }
         },
+        { label: 'Live assist', click: options.onLive },
         { label: 'Settings', click: options.onSettings },
         { type: 'separator' },
         { label: 'Quit AutoDesk', click: options.onQuit }

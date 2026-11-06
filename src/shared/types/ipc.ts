@@ -1,3 +1,4 @@
+import type { ListenerCommand, ListenerStatus, LiveEvent, Speaker } from './live'
 import type { ModelListRequest, ModelListResponse } from './models'
 import type { SettingsUpdate, SettingsView } from './settings'
 
@@ -58,5 +59,18 @@ export interface AutoDeskApi {
     setDirty(dirty: boolean): void
     onSaveRequest(listener: () => void): Unsubscribe
     close(): void
+  }
+  live: {
+    onEvent(listener: (event: LiveEvent) => void): Unsubscribe
+    ready(): void
+    start(): void
+    stop(): void
+    ask(): void
+    close(): void
+  }
+  listener: {
+    onCommand(listener: (command: ListenerCommand) => void): Unsubscribe
+    sendAudio(speaker: Speaker, pcm: ArrayBuffer): void
+    reportStatus(status: ListenerStatus): void
   }
 }
