@@ -1,27 +1,29 @@
 import type { TranscriptLine } from '@/shared/types/live'
 
 const SPEAKER_LABELS = { them: 'Them', you: 'Me' } as const
-const MAX_TRANSCRIPT_CHARS = 2400
-const MAX_LATEST_CHARS = 600
+const HISTORY_MESSAGES = 5
+const MAX_MESSAGE_CHARS = 400
 
-function tail(text: string, maxChars: number): string {
-  return text.length > maxChars ? `...${text.slice(-maxChars)}` : text
+export function trimMessage(text: string, maxChars = MAX_MESSAGE_CHARS): string {
+  const clean = text.replace(/\s+/g, ' ').trim()
+  return clean.length > maxChars ? `...${clean.slice(-maxChars).trimStart()}` : clean
 }
 
 export function latestQuestion(lines: readonly TranscriptLine[]): string {
   return [...lines].reverse().find((line) => line.speaker === 'them')?.text ?? ''
 }
 
-export function formatTranscript(lines: readonly TranscriptLine[], maxChars = MAX_TRANSCRIPT_CHARS): string {
-  const picked: string[] = []
-  let length = 0
-  for (const line of [...lines].reverse()) {
-    const entry = `${SPEAKER_LABELS[line.speaker]}: ${tail(line.text, maxChars)}`
-    if (picked.length > 0 && length + entry.length > maxChars) break
-    picked.push(entry)
-    length += entry.length + 1
-  }
-  return picked.reverse().join('\n')
+export function formatTranscript(
+  lines: readonly TranscriptLine[],
+  maxMessages = HISTORY_MESSAGES,
+  maxChars = MAX_MESSAGE_CHARS
+): string {
+  return lines
+    .map((line) => ({ speaker: line.speaker, text: trimMessage(line.text, maxChars) }))
+    .filter((line) => line.text !== '')
+    .slice(-maxMessages)
+    .map((line) => `${SPEAKER_LABELS[line.speaker]}: ${line.text}`)
+    .join('\n')
 }
 
 export function buildLivePrompt(instructions: string, lines: readonly TranscriptLine[]): string {
@@ -30,9 +32,9 @@ export function buildLivePrompt(instructions: string, lines: readonly Transcript
   return [
     instructions,
     '',
-    'Transcript so far ("Them" is the other person, "Me" is me):',
+    `Last ${HISTORY_MESSAGES} messages ("Them" is the other person, "Me" is me):`,
     transcript || '(nothing has been said yet)',
     '',
-    question ? `Latest thing they said: ${tail(question, MAX_LATEST_CHARS)}` : 'Suggest what I could say next.'
+    question ? `Latest thing they said: ${trimMessage(question)}` : 'Suggest what I could say next.'
   ].join('\n')
 }

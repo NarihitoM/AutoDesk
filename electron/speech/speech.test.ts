@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildLivePrompt, formatTranscript, latestQuestion } from '../live/livePrompt'
+import { buildLivePrompt, formatTranscript, latestQuestion, trimMessage } from '../live/livePrompt'
 import { cleanTranscript } from './transcript'
 import { encodeWav } from './wav'
 
@@ -23,18 +23,27 @@ describe('live prompt', () => {
     expect(latestQuestion(lines)).toBe('Why do you want this role?')
   })
 
-  it('keeps only the most recent lines when the transcript is long', () => {
-    const many = Array.from({ length: 50 }, (_, index) => line('them', `Line number ${index} with some words`, String(index)))
-    const transcript = formatTranscript(many, 200)
-    expect(transcript.length).toBeLessThanOrEqual(240)
-    expect(transcript.endsWith('Line number 49 with some words')).toBe(true)
+  it('sends only the last 5 messages', () => {
+    const many = Array.from({ length: 12 }, (_, index) => line('them', `Message ${index}`, String(index)))
+    expect(formatTranscript(many).split('\n')).toEqual([
+      'Them: Message 7',
+      'Them: Message 8',
+      'Them: Message 9',
+      'Them: Message 10',
+      'Them: Message 11'
+    ])
   })
 
-  it('trims one very long turn to its most recent words', () => {
-    const transcript = formatTranscript([line('them', `start ${'word '.repeat(400)}end`)], 300)
-    expect(transcript.length).toBeLessThanOrEqual(320)
-    expect(transcript.startsWith('Them: ...')).toBe(true)
-    expect(transcript.endsWith('end')).toBe(true)
+  it('trims whitespace and keeps the most recent words of a long message', () => {
+    expect(trimMessage('  So   tell me\n about it.  ')).toBe('So tell me about it.')
+    const trimmed = trimMessage(`start ${'word '.repeat(400)}end`, 100)
+    expect(trimmed.length).toBeLessThanOrEqual(103)
+    expect(trimmed.startsWith('...')).toBe(true)
+    expect(trimmed.endsWith('end')).toBe(true)
+  })
+
+  it('skips messages that are empty after trimming', () => {
+    expect(formatTranscript([line('them', '   ', 'a'), line('you', 'Sure.', 'b')])).toBe('Me: Sure.')
   })
 
   it('builds a prompt with instructions, transcript, and the question', () => {

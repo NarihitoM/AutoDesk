@@ -1,4 +1,4 @@
-import { useId } from 'react'
+import { useEffect, useId } from 'react'
 import { PROVIDER_LABELS } from '@/shared/lib/providers'
 import type { ModelOption } from '@/shared/types/models'
 import type { ProviderId } from '@/shared/types/settings'
@@ -15,6 +15,7 @@ interface ModelPickerProps {
   imageModel: string
   onChange(model: string): void
   onImageModelChange(model: string): void
+  onConnectionChange(connected: boolean): void
 }
 
 const AUTOMATIC: ModelOption = { id: '', label: 'Automatic', images: 'unknown' }
@@ -58,10 +59,16 @@ function readerHint(selected: ModelOption | undefined, readers: readonly ModelOp
 }
 
 export function ModelPicker(props: ModelPickerProps) {
-  const { provider, baseUrl, apiKey, canFetch, value, imageModel, onChange, onImageModelChange } = props
+  const { provider, baseUrl, apiKey, canFetch, value, imageModel, onChange, onImageModelChange, onConnectionChange } =
+    props
   const id = useId()
   const readerId = useId()
   const { state, reload } = useModelList({ provider, baseUrl, apiKey, canFetch })
+
+  useEffect(() => {
+    if (state.status === 'ready') onConnectionChange(state.result.models.length > 0)
+    if (state.status === 'error') onConnectionChange(false)
+  }, [state, onConnectionChange])
 
   const live = state.status === 'ready' ? state.result.models : []
   const isLive = live.length > 0

@@ -12,6 +12,7 @@ interface ProviderFormProps {
   onConfigChange(config: ProviderConfig): void
   onKeyDraftChange(value: string): void
   onClearKey(): void
+  onConnectionChange(connected: boolean): void
 }
 
 const BASE_URL_HINTS: Record<ProviderId, string> = {
@@ -26,7 +27,8 @@ const BASE_URL_HINTS: Record<ProviderId, string> = {
 }
 
 export function ProviderForm(props: ProviderFormProps) {
-  const { id, config, hasStoredKey, keyDraft, keyCleared, onConfigChange, onKeyDraftChange, onClearKey } = props
+  const { id, config, hasStoredKey, keyDraft, keyCleared, onConfigChange, onKeyDraftChange, onClearKey, onConnectionChange } =
+    props
   const keySaved = hasStoredKey && !keyCleared
   const draft = keyDraft.trim()
   const canFetchModels = !KEY_REQUIRED[id] || keySaved || draft !== ''
@@ -75,6 +77,7 @@ export function ProviderForm(props: ProviderFormProps) {
         imageModel={config.imageModel}
         onChange={(model) => onConfigChange({ ...config, model })}
         onImageModelChange={(imageModel) => onConfigChange({ ...config, imageModel })}
+        onConnectionChange={onConnectionChange}
       />
 
       <label className={styles.field}>

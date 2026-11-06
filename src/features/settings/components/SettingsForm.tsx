@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { bridge } from '@/shared/lib/bridge'
 import {
   CAPTURE_KEY_LABELS,
@@ -19,6 +19,7 @@ import type {
   SettingsView
 } from '@/shared/types/settings'
 import type { AppTab } from '@/shared/types/ipc'
+import { useConnectedProviders } from '../hooks/useConnectedProviders'
 import type { SaveStatus } from '../hooks/useSettings'
 import { LiveLauncher } from './LiveLauncher'
 import { LiveSettingsSection } from './LiveSettingsSection'
@@ -70,6 +71,8 @@ export function SettingsForm({ tab, view, status, onSave }: SettingsFormProps) {
   const [launching, setLaunching] = useState(false)
 
   const active = draft.activeProvider
+  const { connected, markConnected } = useConnectedProviders(view.settings.providers)
+  const onConnectionChange = useCallback((ok: boolean) => markConnected(active, ok), [markConnected, active])
   const keyChanges = buildKeyChanges(keyDrafts, clearedKeys)
   const hasChanges = !sameSettings(draft, view.settings) || Object.keys(keyChanges).length > 0
 
@@ -165,7 +168,11 @@ export function SettingsForm({ tab, view, status, onSave }: SettingsFormProps) {
                 <ProviderLogo provider={id} />
               </span>
               <span className={styles.segmentLabel}>{PROVIDER_SHORT_LABELS[id]}</span>
-              {view.storedKeys[id] && !clearedKeys.has(id) && <span className={styles.dot} aria-label="Key saved" />}
+              {connected[id] ? (
+                <span className={styles.dot} aria-label="Connected" />
+              ) : (
+                view.storedKeys[id] && !clearedKeys.has(id) && <span className={styles.dot} aria-label="Key saved" />
+              )}
             </button>
           ))}
         </div>
@@ -179,6 +186,7 @@ export function SettingsForm({ tab, view, status, onSave }: SettingsFormProps) {
           onConfigChange={updateProvider}
           onKeyDraftChange={setKeyDraft}
           onClearKey={clearKey}
+          onConnectionChange={onConnectionChange}
         />
       </section>
 

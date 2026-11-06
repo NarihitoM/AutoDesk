@@ -89,7 +89,7 @@ AutoDesk is a lightweight Windows tray app that turns any part of your screen in
 | LM Studio (local, free) | Install [LM Studio](https://lmstudio.ai), load a vision model, and start the local server | No |
 | Custom | Any server with an OpenAI-compatible API | Optional |
 
-Open **Settings** from the tray icon, pick the provider, paste the key, and choose a model. The model list is fetched live from the provider, and models that can read screenshots are tagged **Images**. Click **Save** when you are done.
+Open **Settings** from the tray icon, pick the provider, paste the key, and choose a model. A green dot on a provider means its key is saved or, for Ollama, LM Studio, and Custom, that AutoDesk reached the server and found models. The model list is fetched live from the provider, and models that can read screenshots are tagged **Images**. Click **Save** when you are done.
 
 **2. Capture**
 
@@ -246,7 +246,7 @@ flowchart LR
 1. A hidden window captures system audio through Windows loopback and the microphone through the default input device.
 2. Each source is split into utterances on pauses, with a noise floor that adapts to steady background sound. Long speech is cut every 10 seconds so replies do not wait for the speaker to stop. While someone is talking, a snapshot of the utterance so far is transcribed about every second, which streams the words into the chat.
 3. Each utterance is sent to `whisper-server.exe` on `127.0.0.1`, started on a free port when Live assist starts and stopped when it ends.
-4. Utterances from the same person are joined into one message while they keep talking. When no speech is heard for 1.5 seconds after the last utterance, the turn ends and AutoDesk streams a reply from your provider using the recent transcript. Replies are capped at 1,024 tokens and the transcript sent is trimmed to the most recent part, so requests stay within small rate limits. A new turn that arrives during a reply is answered after it finishes.
+4. Utterances from the same person are joined into one message while they keep talking. When no speech is heard for 1.5 seconds after the last utterance, the turn ends and AutoDesk streams a reply from your provider using the last 5 messages as history. Each message is trimmed to its most recent 400 characters and replies are capped at 1,024 tokens, so requests stay within small rate limits. A new turn that arrives during a reply is answered after it finishes.
 
 </details>
 
