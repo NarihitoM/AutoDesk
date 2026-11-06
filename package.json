@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "description": "Snip any part of your screen and ask an AI about it",
   "author": "Narihito",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/NarihitoM/AutoDesk.git"
@@ -46,6 +47,7 @@
     "nsis": {
       "artifactName": "${productName}.exe",
       "oneClick": false,
+      "license": "LICENSE",
       "allowToChangeInstallationDirectory": true,
       "installerIcon": "autodesk-icon.ico",
       "uninstallerIcon": "autodesk-icon.ico",
@@ -60,6 +62,10 @@
       {
         "from": "resources/speech",
         "to": "speech"
+      },
+      {
+        "from": "LICENSE",
+        "to": "LICENSE.txt"
       }
     ]
   },

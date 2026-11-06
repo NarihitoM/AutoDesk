@@ -319,3 +319,7 @@ The Release workflow sets the app version from the tag, runs the checks, builds 
 ## Third-party software
 
 The installer includes [whisper.cpp](https://github.com/ggml-org/whisper.cpp) and its `ggml-base` and Silero VAD models, released under the MIT License. A copy of the license is installed next to the speech engine.
+
+## License
+
+AutoDesk is released under the [MIT License](LICENSE). Copyright (c) 2026 Narihito.
