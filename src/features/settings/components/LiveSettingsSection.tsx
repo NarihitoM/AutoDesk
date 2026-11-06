@@ -25,25 +25,9 @@ export function LiveSettingsSection({ value, onChange }: LiveSettingsSectionProp
         </select>
       </label>
 
-      <div className={styles.field}>
-        <span className={styles.label}>Listen to</span>
-        <label className={styles.checkbox}>
-          <input
-            type="checkbox"
-            checked={value.listenSystem}
-            onChange={(event) => update('listenSystem', event.target.checked)}
-          />
-          <span>System audio (the other people in a call)</span>
-        </label>
-        <label className={styles.checkbox}>
-          <input type="checkbox" checked={value.listenMic} onChange={(event) => update('listenMic', event.target.checked)} />
-          <span>Microphone (you)</span>
-        </label>
-      </div>
-
       <label className={styles.checkbox}>
         <input type="checkbox" checked={value.autoAnswer} onChange={(event) => update('autoAnswer', event.target.checked)} />
-        <span>Reply automatically when they finish speaking</span>
+        <span>Reply automatically when the audio pauses</span>
       </label>
       <span className={styles.hint}>Press {LIVE_HOTKEY_LABEL} while listening to get a reply right away.</span>
 

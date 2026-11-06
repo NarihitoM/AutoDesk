@@ -29,7 +29,7 @@ vi.mock('../settings/settingsStore', () => ({
   getSettings: () => ({
     activeProvider: 'groq',
     providers: { groq: { model: 'test-model', imageModel: '', baseUrl: 'https://example.com/v1' } },
-    live: { language: 'en', autoAnswer: true, listenSystem: true, listenMic: false, prompt: 'Help me.' }
+    live: { language: 'en', autoAnswer: true, prompt: 'Help me.' }
   })
 }))
 
@@ -73,12 +73,12 @@ describe('liveSession turns', () => {
     const session = await loadSession()
     mocks.transcripts.push('All right, the cars are taking off.', 'First day, you know?')
 
-    session.activity('them', true)
-    session.audio('them', 1, pcm)
+    session.activity(true)
+    session.audio(1, pcm)
     await settle()
-    session.activity('them', true)
+    session.activity(true)
     await vi.advanceTimersByTimeAsync(3000)
-    session.audio('them', 2, pcm)
+    session.audio(2, pcm)
     await settle()
 
     expect(lines()).toHaveLength(1)
@@ -90,7 +90,7 @@ describe('liveSession turns', () => {
     await settle()
     expect(lines()[0]?.open).toBe(false)
     expect(mocks.prompts).toHaveLength(1)
-    expect(mocks.prompts[0]).toContain('Latest thing they said: All right, the cars are taking off. First day, you know?')
+    expect(mocks.prompts[0]).toContain('Latest message: All right, the cars are taking off. First day, you know?')
     session.stop()
   })
 
@@ -98,10 +98,10 @@ describe('liveSession turns', () => {
     const session = await loadSession()
     mocks.transcripts.push('First question?', 'Second question?')
 
-    session.audio('them', 1, pcm)
+    session.audio(1, pcm)
     await settle()
     await vi.advanceTimersByTimeAsync(1600)
-    session.audio('them', 2, pcm)
+    session.audio(2, pcm)
     await settle()
 
     expect(lines().map((line) => line.text)).toEqual(['First question?', 'Second question?'])
@@ -112,13 +112,13 @@ describe('liveSession turns', () => {
     const session = await loadSession()
     mocks.transcripts.push('Tell me about yourself.')
 
-    session.audio('them', 1, pcm)
+    session.audio(1, pcm)
     await settle()
-    session.activity('them', true)
+    session.activity(true)
     await vi.advanceTimersByTimeAsync(5000)
     expect(mocks.prompts).toHaveLength(0)
 
-    session.activity('them', false)
+    session.activity(false)
     await vi.advanceTimersByTimeAsync(1600)
     await settle()
     expect(mocks.prompts).toHaveLength(1)

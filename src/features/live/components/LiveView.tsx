@@ -63,7 +63,7 @@ export function LiveView() {
 
       <ChatFeed
         lines={state?.lines ?? []}
-        partials={state?.partials ?? {}}
+        partial={state?.partial ?? ''}
         suggestions={state?.suggestions ?? []}
         listening={status.kind === 'listening'}
       />

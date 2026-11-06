@@ -324,7 +324,7 @@ export function sendLiveEvent(event: LiveEvent): void {
 
 function prepareListenerSession(): Electron.Session {
   const listenerSession = session.fromPartition(LISTENER_PARTITION)
-  const allowed = (permission: string): boolean => permission === 'media' || permission === 'display-capture'
+  const allowed = (permission: string): boolean => permission === 'display-capture'
   listenerSession.setPermissionRequestHandler((_contents, permission, callback) => callback(allowed(permission)))
   listenerSession.setPermissionCheckHandler((_contents, permission) => allowed(permission))
   listenerSession.setDisplayMediaRequestHandler((_request, callback) => {

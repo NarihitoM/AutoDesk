@@ -1,8 +1,5 @@
-export type Speaker = 'them' | 'you'
-
 export interface TranscriptLine {
   id: string
-  speaker: Speaker
   text: string
   at: number
   open: boolean
@@ -20,15 +17,13 @@ export interface Suggestion {
 export type LiveStatus =
   | { kind: 'idle' }
   | { kind: 'starting' }
-  | { kind: 'listening'; speakers: Speaker[] }
+  | { kind: 'listening' }
   | { kind: 'error'; message: string }
-
-export type PartialLines = Partial<Record<Speaker, string>>
 
 export interface LiveState {
   status: LiveStatus
   lines: TranscriptLine[]
-  partials: PartialLines
+  partial: string
   suggestions: Suggestion[]
   hotkey: string
 }
@@ -37,14 +32,13 @@ export type LiveEvent =
   | { type: 'snapshot'; state: LiveState }
   | { type: 'status'; status: LiveStatus }
   | { type: 'line'; line: TranscriptLine }
-  | { type: 'partial'; speaker: Speaker; text: string }
+  | { type: 'partial'; text: string }
   | { type: 'suggestion'; suggestion: Suggestion }
   | { type: 'delta'; id: string; text: string }
 
-export type ListenerCommand = { type: 'start'; system: boolean; mic: boolean } | { type: 'stop' }
+export type ListenerCommand = { type: 'start' } | { type: 'stop' }
 
 export interface ListenerStatus {
-  speaker: Speaker
   ok: boolean
   message?: string
 }
@@ -52,7 +46,5 @@ export interface ListenerStatus {
 export interface LiveSettings {
   language: string
   autoAnswer: boolean
-  listenSystem: boolean
-  listenMic: boolean
   prompt: string
 }

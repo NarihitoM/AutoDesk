@@ -31,8 +31,6 @@ function sanitizeLive(raw: unknown, fallback: LiveSettings): LiveSettings {
   return {
     language: oneOf(pick(raw, 'language'), languages, fallback.language),
     autoAnswer: flag(pick(raw, 'autoAnswer'), fallback.autoAnswer),
-    listenSystem: flag(pick(raw, 'listenSystem'), fallback.listenSystem),
-    listenMic: flag(pick(raw, 'listenMic'), fallback.listenMic),
     prompt: nonEmptyText(pick(raw, 'prompt'), fallback.prompt)
   }
 }

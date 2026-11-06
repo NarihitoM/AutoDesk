@@ -14,23 +14,14 @@ function reduce(state: LiveState | null, event: LiveEvent): LiveState | null {
     case 'status':
       return { ...state, status: event.status }
     case 'line': {
-      const partials = { ...state.partials }
-      delete partials[event.line.speaker]
       const exists = state.lines.some((line) => line.id === event.line.id)
       const lines = exists
         ? state.lines.map((line) => (line.id === event.line.id ? event.line : line))
         : [...state.lines, event.line]
-      return { ...state, lines, partials }
+      return { ...state, lines, partial: '' }
     }
-    case 'partial': {
-      const partials = { ...state.partials }
-      if (event.text) {
-        partials[event.speaker] = event.text
-      } else {
-        delete partials[event.speaker]
-      }
-      return { ...state, partials }
-    }
+    case 'partial':
+      return { ...state, partial: event.text }
     case 'suggestion': {
       const exists = state.suggestions.some((suggestion) => suggestion.id === event.suggestion.id)
       return {

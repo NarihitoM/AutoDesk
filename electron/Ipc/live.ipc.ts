@@ -1,6 +1,6 @@
 import { ipcMain, type WebContents } from 'electron'
 import { Channels } from '@/shared/lib/channels'
-import type { ListenerStatus, Speaker } from '@/shared/types/live'
+import type { ListenerStatus } from '@/shared/types/live'
 import { liveSession } from '../live/liveSession'
 import { asText, pick } from '../lib/json'
 import { SAMPLE_RATE } from '../speech/wav'
@@ -16,10 +16,6 @@ import {
 const MAX_UTTERANCE_SECONDS = 30
 const MAX_PCM_BYTES = SAMPLE_RATE * 2 * MAX_UTTERANCE_SECONDS
 
-function asSpeaker(value: unknown): Speaker | null {
-  return value === 'them' || value === 'you' ? value : null
-}
-
 function asPcm(value: unknown): Int16Array | null {
   const bytes = value instanceof ArrayBuffer ? new Uint8Array(value) : ArrayBuffer.isView(value) ? new Uint8Array(value.buffer, value.byteOffset, value.byteLength) : null
   if (!bytes || bytes.byteLength === 0 || bytes.byteLength > MAX_PCM_BYTES || bytes.byteLength % 2 !== 0) return null
@@ -31,11 +27,10 @@ function asUtteranceId(value: unknown): number | null {
 }
 
 function asListenerStatus(value: unknown): ListenerStatus | null {
-  const speaker = asSpeaker(pick(value, 'speaker'))
   const ok = pick(value, 'ok')
-  if (!speaker || typeof ok !== 'boolean') return null
+  if (typeof ok !== 'boolean') return null
   const message = asText(pick(value, 'message'))?.slice(0, 300)
-  return message ? { speaker, ok, message } : { speaker, ok }
+  return message ? { ok, message } : { ok }
 }
 
 function canControl(sender: WebContents): boolean {
@@ -76,26 +71,23 @@ export function registerLiveIpc(): void {
     if (isLiveSender(event.sender)) closeLiveWindow()
   })
 
-  ipcMain.on(Channels.listenerAudio, (event, rawSpeaker: unknown, rawId: unknown, rawPcm: unknown) => {
+  ipcMain.on(Channels.listenerAudio, (event, rawId: unknown, rawPcm: unknown) => {
     if (!isListenerSender(event.sender)) return
-    const speaker = asSpeaker(rawSpeaker)
     const id = asUtteranceId(rawId)
     const pcm = asPcm(rawPcm)
-    if (speaker && id && pcm) liveSession.audio(speaker, id, pcm)
+    if (id && pcm) liveSession.audio(id, pcm)
   })
 
-  ipcMain.on(Channels.listenerPartial, (event, rawSpeaker: unknown, rawId: unknown, rawPcm: unknown) => {
+  ipcMain.on(Channels.listenerPartial, (event, rawId: unknown, rawPcm: unknown) => {
     if (!isListenerSender(event.sender)) return
-    const speaker = asSpeaker(rawSpeaker)
     const id = asUtteranceId(rawId)
     const pcm = asPcm(rawPcm)
-    if (speaker && id && pcm) liveSession.partial(speaker, id, pcm)
+    if (id && pcm) liveSession.partial(id, pcm)
   })
 
-  ipcMain.on(Channels.listenerActivity, (event, rawSpeaker: unknown, speaking: unknown) => {
+  ipcMain.on(Channels.listenerActivity, (event, speaking: unknown) => {
     if (!isListenerSender(event.sender)) return
-    const speaker = asSpeaker(rawSpeaker)
-    if (speaker && typeof speaking === 'boolean') liveSession.activity(speaker, speaking)
+    if (typeof speaking === 'boolean') liveSession.activity(speaking)
   })
 
   ipcMain.on(Channels.listenerStatus, (event, raw: unknown) => {

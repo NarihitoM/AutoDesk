@@ -1,7 +1,7 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 import { Channels } from '@/shared/lib/channels'
 import type { AppTab, AutoDeskApi, PanelEvent, SelectionRect, Unsubscribe } from '@/shared/types/ipc'
-import type { ListenerCommand, ListenerStatus, LiveEvent, Speaker } from '@/shared/types/live'
+import type { ListenerCommand, ListenerStatus, LiveEvent } from '@/shared/types/live'
 import type { ModelListRequest, ModelListResponse } from '@/shared/types/models'
 import type { SettingsUpdate, SettingsView } from '@/shared/types/settings'
 
@@ -50,10 +50,9 @@ const api: AutoDeskApi = {
   },
   listener: {
     onCommand: (listener) => listen<ListenerCommand>(Channels.listenerCommand, listener),
-    sendAudio: (speaker: Speaker, id: number, pcm: ArrayBuffer) => ipcRenderer.send(Channels.listenerAudio, speaker, id, pcm),
-    sendPartial: (speaker: Speaker, id: number, pcm: ArrayBuffer) =>
-      ipcRenderer.send(Channels.listenerPartial, speaker, id, pcm),
-    sendActivity: (speaker: Speaker, speaking: boolean) => ipcRenderer.send(Channels.listenerActivity, speaker, speaking),
+    sendAudio: (id: number, pcm: ArrayBuffer) => ipcRenderer.send(Channels.listenerAudio, id, pcm),
+    sendPartial: (id: number, pcm: ArrayBuffer) => ipcRenderer.send(Channels.listenerPartial, id, pcm),
+    sendActivity: (speaking: boolean) => ipcRenderer.send(Channels.listenerActivity, speaking),
     reportStatus: (status: ListenerStatus) => ipcRenderer.send(Channels.listenerStatus, status)
   }
 }

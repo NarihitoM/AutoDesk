@@ -18,8 +18,9 @@ export function LiveLauncher({ starting, onStart }: LiveLauncherProps) {
       <div className="flex flex-col gap-1.5">
         <h2 className="text-[17px] font-semibold">Live assist</h2>
         <p className="text-muted">
-          Click Start to open the live chat. It transcribes the call word by word as people speak, and the AI replies in
-          the chat each time they finish talking. Press {LIVE_HOTKEY_LABEL} to get a reply right away.
+          Click Start to open the live chat. It transcribes your computer's audio word by word, and the AI replies in the
+          chat each time the audio pauses. Your microphone is never used. Press {LIVE_HOTKEY_LABEL} to get a reply right
+          away.
         </p>
       </div>
 
@@ -49,7 +50,7 @@ export function LiveLauncher({ starting, onStart }: LiveLauncherProps) {
 
       <p className={styles.hint}>
         Audio is transcribed on this PC by a built-in speech model and is never uploaded. Only the transcript text is
-        sent to the AI provider from the Settings tab. Use headphones so your mic does not pick up the other person.
+        sent to the AI provider from the Settings tab.
       </p>
     </section>
   )

@@ -16,12 +16,6 @@ export async function openSystemAudio(): Promise<MediaStream> {
   return stream
 }
 
-export function openMicrophone(): Promise<MediaStream> {
-  return navigator.mediaDevices.getUserMedia({
-    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 }
-  })
-}
-
 export async function startCapture(stream: MediaStream, onSamples: (samples: Float32Array) => void): Promise<CaptureHandle> {
   const context = new AudioContext({ sampleRate: CAPTURE_SAMPLE_RATE })
   try {

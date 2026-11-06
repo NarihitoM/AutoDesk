@@ -1,4 +1,4 @@
-import type { ListenerCommand, ListenerStatus, LiveEvent, Speaker } from './live'
+import type { ListenerCommand, ListenerStatus, LiveEvent } from './live'
 import type { ModelListRequest, ModelListResponse } from './models'
 import type { SettingsUpdate, SettingsView } from './settings'
 
@@ -74,9 +74,9 @@ export interface AutoDeskApi {
   }
   listener: {
     onCommand(listener: (command: ListenerCommand) => void): Unsubscribe
-    sendAudio(speaker: Speaker, id: number, pcm: ArrayBuffer): void
-    sendPartial(speaker: Speaker, id: number, pcm: ArrayBuffer): void
-    sendActivity(speaker: Speaker, speaking: boolean): void
+    sendAudio(id: number, pcm: ArrayBuffer): void
+    sendPartial(id: number, pcm: ArrayBuffer): void
+    sendActivity(speaking: boolean): void
     reportStatus(status: ListenerStatus): void
   }
 }

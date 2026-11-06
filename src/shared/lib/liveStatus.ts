@@ -6,10 +6,8 @@ export function liveStatusLabel(status: LiveStatus): string {
       return 'Stopped'
     case 'starting':
       return 'Starting speech engine...'
-    case 'listening': {
-      const sources = status.speakers.map((speaker) => (speaker === 'them' ? 'system audio' : 'mic'))
-      return `Listening to ${sources.join(' and ')}`
-    }
+    case 'listening':
+      return 'Listening to system audio'
     case 'error':
       return status.message
   }

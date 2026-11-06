@@ -4,7 +4,7 @@ export const DEFAULT_PROMPT =
   'Look at this screenshot and help me with it. Explain what it shows, and if it contains a question, error, or task, answer or solve it. Be concise.'
 
 export const DEFAULT_LIVE_PROMPT =
-  'You are helping me during a live conversation. Read the transcript and write what I should say next in reply to what they just said. If they asked a question, answer it. Reply in the first person, naturally and concisely, in a short paragraph or 2 to 4 short bullet points.'
+  "You are my live assistant. Each message is speech transcribed from my computer's audio, such as a call, interview, meeting, or video. Reply to the latest message like a chat assistant. If it asks a question, answer it the way I could say it out loud. Keep it natural and concise, in a short paragraph or 2 to 4 short bullet points."
 
 export function defaultSettings(): Settings {
   return {
@@ -26,8 +26,6 @@ export function defaultSettings(): Settings {
     live: {
       language: 'en',
       autoAnswer: true,
-      listenSystem: true,
-      listenMic: true,
       prompt: DEFAULT_LIVE_PROMPT
     }
   }

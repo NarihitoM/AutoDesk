@@ -3,7 +3,7 @@ import { buildLivePrompt, formatTranscript, latestQuestion, trimMessage } from '
 import { cleanTranscript } from './transcript'
 import { encodeWav } from './wav'
 
-const line = (speaker: 'them' | 'you', text: string, id = text) => ({ id, speaker, text, at: 0, open: false })
+const line = (text: string, id = text) => ({ id, text, at: 0, open: false })
 
 describe('cleanTranscript', () => {
   it('removes noise tags and keeps real speech', () => {
@@ -16,21 +16,21 @@ describe('cleanTranscript', () => {
 })
 
 describe('live prompt', () => {
-  const lines = [line('them', 'Hi, thanks for joining.'), line('you', 'Happy to be here.'), line('them', 'Why do you want this role?')]
+  const lines = [line('Hi, thanks for joining.'), line('Happy to be here.'), line('Why do you want this role?')]
 
-  it('labels speakers and finds the latest question', () => {
-    expect(formatTranscript(lines)).toBe('Them: Hi, thanks for joining.\nMe: Happy to be here.\nThem: Why do you want this role?')
+  it('lists the messages and finds the latest one', () => {
+    expect(formatTranscript(lines)).toBe('- Hi, thanks for joining.\n- Happy to be here.\n- Why do you want this role?')
     expect(latestQuestion(lines)).toBe('Why do you want this role?')
   })
 
   it('sends only the last 5 messages', () => {
-    const many = Array.from({ length: 12 }, (_, index) => line('them', `Message ${index}`, String(index)))
+    const many = Array.from({ length: 12 }, (_, index) => line(`Message ${index}`, String(index)))
     expect(formatTranscript(many).split('\n')).toEqual([
-      'Them: Message 7',
-      'Them: Message 8',
-      'Them: Message 9',
-      'Them: Message 10',
-      'Them: Message 11'
+      '- Message 7',
+      '- Message 8',
+      '- Message 9',
+      '- Message 10',
+      '- Message 11'
     ])
   })
 
@@ -43,14 +43,14 @@ describe('live prompt', () => {
   })
 
   it('skips messages that are empty after trimming', () => {
-    expect(formatTranscript([line('them', '   ', 'a'), line('you', 'Sure.', 'b')])).toBe('Me: Sure.')
+    expect(formatTranscript([line('   ', 'a'), line('Sure.', 'b')])).toBe('- Sure.')
   })
 
   it('builds a prompt with instructions, transcript, and the question', () => {
     const prompt = buildLivePrompt('Help me answer.', lines)
     expect(prompt.startsWith('Help me answer.')).toBe(true)
-    expect(prompt).toContain('Me: Happy to be here.')
-    expect(prompt.endsWith('Latest thing they said: Why do you want this role?')).toBe(true)
+    expect(prompt).toContain('- Happy to be here.')
+    expect(prompt.endsWith('Latest message: Why do you want this role?')).toBe(true)
   })
 })
 

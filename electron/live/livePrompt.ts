@@ -1,6 +1,5 @@
 import type { TranscriptLine } from '@/shared/types/live'
 
-const SPEAKER_LABELS = { them: 'Them', you: 'Me' } as const
 const HISTORY_MESSAGES = 5
 const MAX_MESSAGE_CHARS = 400
 
@@ -10,7 +9,7 @@ export function trimMessage(text: string, maxChars = MAX_MESSAGE_CHARS): string 
 }
 
 export function latestQuestion(lines: readonly TranscriptLine[]): string {
-  return [...lines].reverse().find((line) => line.speaker === 'them')?.text ?? ''
+  return lines.at(-1)?.text ?? ''
 }
 
 export function formatTranscript(
@@ -19,10 +18,10 @@ export function formatTranscript(
   maxChars = MAX_MESSAGE_CHARS
 ): string {
   return lines
-    .map((line) => ({ speaker: line.speaker, text: trimMessage(line.text, maxChars) }))
-    .filter((line) => line.text !== '')
+    .map((line) => trimMessage(line.text, maxChars))
+    .filter((text) => text !== '')
     .slice(-maxMessages)
-    .map((line) => `${SPEAKER_LABELS[line.speaker]}: ${line.text}`)
+    .map((text) => `- ${text}`)
     .join('\n')
 }
 
@@ -32,9 +31,9 @@ export function buildLivePrompt(instructions: string, lines: readonly Transcript
   return [
     instructions,
     '',
-    `Last ${HISTORY_MESSAGES} messages ("Them" is the other person, "Me" is me):`,
+    `Last ${HISTORY_MESSAGES} messages heard from my computer's audio:`,
     transcript || '(nothing has been said yet)',
     '',
-    question ? `Latest thing they said: ${trimMessage(question)}` : 'Suggest what I could say next.'
+    question ? `Latest message: ${trimMessage(question)}` : 'Reply to what was said.'
   ].join('\n')
 }

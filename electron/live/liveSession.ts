@@ -1,15 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { globalShortcut } from 'electron'
 import { KEY_REQUIRED, LIVE_HOTKEY, LIVE_HOTKEY_LABEL } from '@/shared/lib/providers'
-import type {
-  ListenerStatus,
-  LiveState,
-  LiveStatus,
-  PartialLines,
-  Speaker,
-  Suggestion,
-  TranscriptLine
-} from '@/shared/types/live'
+import type { ListenerStatus, LiveState, LiveStatus, Suggestion, TranscriptLine } from '@/shared/types/live'
 import { providers } from '../Agent/providers'
 import { streamChat } from '../Agent/stream'
 import { getApiKey, getSettings } from '../settings/settingsStore'
@@ -23,13 +15,6 @@ const TURN_GAP_MS = 1500
 const MAX_LINES = 400
 const MAX_SUGGESTIONS = 20
 const REPLY_MAX_TOKENS = 1024
-const SPEAKERS: readonly Speaker[] = ['them', 'you']
-
-type PerSpeaker<T> = Record<Speaker, T>
-
-function perSpeaker<T>(value: T): PerSpeaker<T> {
-  return { them: value, you: value }
-}
 
 function describeError(error: unknown): string {
   return error instanceof Error && error.message ? error.message : 'Something went wrong.'
@@ -38,17 +23,16 @@ function describeError(error: unknown): string {
 class LiveSession {
   private status: LiveStatus = { kind: 'idle' }
   private lines: TranscriptLine[] = []
-  private partials: PartialLines = {}
+  private partialText = ''
   private suggestions: Suggestion[] = []
-  private speakers = new Set<Speaker>()
   private queue: Promise<void> = Promise.resolve()
   private controller: AbortController | null = null
   private running = false
   private run = 0
-  private finalized = perSpeaker(0)
-  private pending = perSpeaker(0)
-  private speaking = perSpeaker(false)
-  private turnTimers: Partial<PerSpeaker<ReturnType<typeof setTimeout>>> = {}
+  private finalized = 0
+  private pending = 0
+  private speaking = false
+  private turnTimer: ReturnType<typeof setTimeout> | null = null
   private partialBusy = false
   private answering = false
   private answerAgain = false
@@ -58,7 +42,7 @@ class LiveSession {
     return {
       status: this.status,
       lines: [...this.lines],
-      partials: { ...this.partials },
+      partial: this.partialText,
       suggestions: this.suggestions.map((suggestion) => ({ ...suggestion })),
       hotkey: LIVE_HOTKEY_LABEL
     }
@@ -67,15 +51,10 @@ class LiveSession {
   async start(): Promise<void> {
     if (this.running) return
     const { live } = getSettings()
-    if (!live.listenSystem && !live.listenMic) {
-      this.setStatus({ kind: 'error', message: 'Turn on system audio or the microphone in Settings > Live assist.' })
-      return
-    }
 
     this.running = true
     this.run += 1
-    this.speakers.clear()
-    this.resetTurns()
+    this.resetTurn()
     this.setStatus({ kind: 'starting' })
     try {
       await whisperServer.start(live.language)
@@ -86,7 +65,7 @@ class LiveSession {
     }
     if (!this.running) return
 
-    sendListenerCommand({ type: 'start', system: live.listenSystem, mic: live.listenMic })
+    sendListenerCommand({ type: 'start' })
     if (!globalShortcut.isRegistered(LIVE_HOTKEY)) globalShortcut.register(LIVE_HOTKEY, () => this.ask())
   }
 
@@ -94,9 +73,8 @@ class LiveSession {
     const wasActive = this.running || this.status.kind !== 'idle'
     this.running = false
     this.run += 1
-    this.speakers.clear()
     this.closeOpenLine()
-    this.resetTurns()
+    this.resetTurn()
     this.answerAgain = false
     this.controller?.abort()
     sendListenerCommand({ type: 'stop' })
@@ -108,46 +86,38 @@ class LiveSession {
   listenerStatus(status: ListenerStatus): void {
     if (!this.running) return
     if (status.ok) {
-      this.speakers.add(status.speaker)
+      this.setStatus({ kind: 'listening' })
     } else {
-      this.speakers.delete(status.speaker)
-    }
-
-    if (this.speakers.size > 0) {
-      this.setStatus({ kind: 'listening', speakers: [...this.speakers] })
-    } else if (!status.ok) {
-      this.setStatus({ kind: 'error', message: status.message ?? 'Could not listen to any audio source.' })
+      this.setStatus({ kind: 'error', message: status.message ?? 'Could not listen to system audio.' })
     }
   }
 
-  activity(speaker: Speaker, speaking: boolean): void {
+  activity(speaking: boolean): void {
     if (!this.running) return
-    this.speaking[speaker] = speaking
+    this.speaking = speaking
     if (speaking) {
-      this.clearTurnTimer(speaker)
+      this.clearTurnTimer()
     } else {
-      this.scheduleTurnEnd(speaker)
+      this.scheduleTurnEnd()
     }
   }
 
-  audio(speaker: Speaker, id: number, pcm: Int16Array): void {
+  audio(id: number, pcm: Int16Array): void {
     if (!this.running) return
     const run = this.run
-    this.speaking[speaker] = false
-    this.pending[speaker] += 1
+    this.speaking = false
+    this.pending += 1
     this.queue = this.queue
       .then(async () => {
         if (run !== this.run) return
         const text = cleanTranscript(await whisperServer.transcribe(encodeWav(pcm)))
         if (run !== this.run) return
-        this.finalized[speaker] = Math.max(this.finalized[speaker], id)
-        if (this.status.kind === 'error' && this.speakers.size > 0) {
-          this.setStatus({ kind: 'listening', speakers: [...this.speakers] })
-        }
+        this.finalized = Math.max(this.finalized, id)
+        if (this.status.kind === 'error') this.setStatus({ kind: 'listening' })
         if (text) {
-          this.appendSpeech(speaker, text)
+          this.appendSpeech(text)
         } else {
-          this.setPartial(speaker, '')
+          this.setPartial('')
         }
       })
       .catch((error: unknown) => {
@@ -155,21 +125,20 @@ class LiveSession {
       })
       .finally(() => {
         if (run !== this.run) return
-        this.pending[speaker] -= 1
-        this.scheduleTurnEnd(speaker)
+        this.pending -= 1
+        this.scheduleTurnEnd()
       })
   }
 
-  partial(speaker: Speaker, id: number, pcm: Int16Array): void {
-    const busy = this.partialBusy || this.pending.them + this.pending.you > 0
-    if (!this.running || busy || id <= this.finalized[speaker]) return
+  partial(id: number, pcm: Int16Array): void {
+    if (!this.running || this.partialBusy || this.pending > 0 || id <= this.finalized) return
     const run = this.run
     this.partialBusy = true
     whisperServer
       .transcribe(encodeWav(pcm))
       .then((raw) => {
         const text = cleanTranscript(raw)
-        if (run === this.run && id > this.finalized[speaker] && text) this.setPartial(speaker, text)
+        if (run === this.run && id > this.finalized && text) this.setPartial(text)
       })
       .catch(() => undefined)
       .finally(() => {
@@ -181,16 +150,15 @@ class LiveSession {
     void this.answer(true)
   }
 
-  private appendSpeech(speaker: Speaker, text: string): void {
-    delete this.partials[speaker]
-    const last = this.lines.at(-1)
-    if (last?.open && last.speaker === speaker) {
-      this.replaceLine({ ...last, text: `${last.text} ${text}` })
+  private appendSpeech(text: string): void {
+    this.partialText = ''
+    const open = this.openLine()
+    if (open) {
+      this.replaceLine({ ...open, text: `${open.text} ${text}` })
       return
     }
 
-    if (last?.open) this.endTurn(last.speaker)
-    const line: TranscriptLine = { id: randomUUID(), speaker, text, at: Date.now(), open: true }
+    const line: TranscriptLine = { id: randomUUID(), text, at: Date.now(), open: true }
     this.lines = [...this.lines, line].slice(-MAX_LINES)
     sendLiveEvent({ type: 'line', line })
   }
@@ -200,58 +168,52 @@ class LiveSession {
     sendLiveEvent({ type: 'line', line })
   }
 
-  private openLineOf(speaker: Speaker): TranscriptLine | undefined {
+  private openLine(): TranscriptLine | undefined {
     const last = this.lines.at(-1)
-    return last?.open && last.speaker === speaker ? last : undefined
+    return last?.open ? last : undefined
   }
 
   private closeOpenLine(): void {
-    const last = this.lines.at(-1)
-    if (last?.open) this.replaceLine({ ...last, open: false })
+    const open = this.openLine()
+    if (open) this.replaceLine({ ...open, open: false })
   }
 
-  private scheduleTurnEnd(speaker: Speaker): void {
-    this.clearTurnTimer(speaker)
-    if (!this.running || this.speaking[speaker] || this.pending[speaker] > 0 || !this.openLineOf(speaker)) return
-    this.turnTimers[speaker] = setTimeout(() => {
-      delete this.turnTimers[speaker]
-      this.endTurn(speaker)
+  private scheduleTurnEnd(): void {
+    this.clearTurnTimer()
+    if (!this.running || this.speaking || this.pending > 0 || !this.openLine()) return
+    this.turnTimer = setTimeout(() => {
+      this.turnTimer = null
+      this.endTurn()
     }, TURN_GAP_MS)
   }
 
-  private endTurn(speaker: Speaker): void {
-    this.clearTurnTimer(speaker)
-    const line = this.openLineOf(speaker)
-    if (!line) return
-    this.replaceLine({ ...line, open: false })
-    if (speaker === 'them' && getSettings().live.autoAnswer) void this.answer()
+  private endTurn(): void {
+    this.clearTurnTimer()
+    if (!this.openLine()) return
+    this.closeOpenLine()
+    if (getSettings().live.autoAnswer) void this.answer()
   }
 
-  private clearTurnTimer(speaker: Speaker): void {
-    const timer = this.turnTimers[speaker]
-    if (timer) clearTimeout(timer)
-    delete this.turnTimers[speaker]
+  private clearTurnTimer(): void {
+    if (this.turnTimer) clearTimeout(this.turnTimer)
+    this.turnTimer = null
   }
 
-  private resetTurns(): void {
-    for (const speaker of SPEAKERS) this.clearTurnTimer(speaker)
-    this.partials = {}
-    this.finalized = perSpeaker(0)
-    this.pending = perSpeaker(0)
-    this.speaking = perSpeaker(false)
+  private resetTurn(): void {
+    this.clearTurnTimer()
+    this.partialText = ''
+    this.finalized = 0
+    this.pending = 0
+    this.speaking = false
   }
 
-  private setPartial(speaker: Speaker, text: string): void {
-    if (text) {
-      this.partials[speaker] = text
-    } else {
-      delete this.partials[speaker]
-    }
-    sendLiveEvent({ type: 'partial', speaker, text })
+  private setPartial(text: string): void {
+    this.partialText = text
+    sendLiveEvent({ type: 'partial', text })
   }
 
-  private latestTheirKey(): string | null {
-    const line = [...this.lines].reverse().find((candidate) => candidate.speaker === 'them')
+  private latestKey(): string | null {
+    const line = this.lines.at(-1)
     return line ? `${line.id}:${line.text.length}` : null
   }
 
@@ -260,7 +222,7 @@ class LiveSession {
       this.answerAgain = true
       return
     }
-    const key = this.latestTheirKey()
+    const key = this.latestKey()
     if (!force && (!key || key === this.answeredKey)) return
     this.answeredKey = key
     this.answering = true
